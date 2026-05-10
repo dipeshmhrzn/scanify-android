@@ -1,4 +1,4 @@
-package com.scanify.app
+package com.scanify.app.presentation
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
