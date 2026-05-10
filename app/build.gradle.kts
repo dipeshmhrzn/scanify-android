@@ -1,6 +1,11 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+
+    kotlin("plugin.serialization") version "2.3.21"
+
+    id("com.google.dagger.hilt.android") version "2.59.2"
+    id("com.google.devtools.ksp") version "2.3.7"
 }
 
 android {
@@ -55,4 +60,18 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.kotlinx.serialization.json)
+
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.android.compiler)
+
+    implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.hilt.navigation.compose)
+
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
 }
