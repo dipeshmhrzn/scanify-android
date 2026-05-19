@@ -23,7 +23,7 @@ fun NavBar(navController: NavHostController, key: String) {
         NavItem("Settings", Icons.Default.Tune, Routes.SettingScreen)
     )
 
-    NavigationBar() {
+    NavigationBar {
         navItems.forEach { item ->
             NavigationBarItem(
                 selected = key == item.title,
