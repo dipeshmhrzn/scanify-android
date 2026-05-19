@@ -12,11 +12,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.currentBackStackEntryAsState
 import com.scanify.app.navigation.Routes
 
 @Composable
-fun NavBar(navController: NavHostController) {
+fun NavBar(navController: NavHostController, key: String) {
     val navItems = listOf(
         NavItem("Home", Icons.Default.Home, Routes.HomeScreen),
         NavItem("Files", Icons.Default.Description, Routes.FileScreen),
@@ -24,14 +23,10 @@ fun NavBar(navController: NavHostController) {
         NavItem("Settings", Icons.Default.Tune, Routes.SettingScreen)
     )
 
-    val backStackEntry = navController.currentBackStackEntryAsState()
-    val currentRoute = backStackEntry.value?.destination?.route
-
-
     NavigationBar() {
         navItems.forEach { item ->
             NavigationBarItem(
-                selected = currentRoute == item.title,
+                selected = key == item.title,
                 icon = {
                     Icon(
                         imageVector = item.icon,
