@@ -37,12 +37,14 @@ fun NavBar(navController: NavHostController, key: String) {
                     Text(text = item.title)
                 },
                 onClick = {
-                    navController.navigate(item.route){
-                        popUpTo(navController.graph.startDestinationId){
-                            saveState = true
+                    if (key != item.title) {
+                        navController.navigate(item.route) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
                         }
-                        launchSingleTop=true
-                        restoreState = true
                     }
                 }
 
