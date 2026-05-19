@@ -18,5 +18,6 @@ fun HomeScreen(navController: NavHostController) {
         verticalArrangement = Arrangement.Center
     ) {
         Text("Home Screen")
+
     }
 }

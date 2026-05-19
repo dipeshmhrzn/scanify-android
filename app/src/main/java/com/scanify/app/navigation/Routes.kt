@@ -15,4 +15,6 @@ sealed class Routes {
 
     @Serializable
     data object SettingScreen: Routes()
+
+
 }

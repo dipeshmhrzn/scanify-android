@@ -1,5 +1,9 @@
 package com.scanify.app.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -41,22 +45,56 @@ fun Navigation(modifier: Modifier = Modifier) {
     ) {
         NavHost(
             navController = navController,
-            startDestination = Routes.HomeScreen
+            startDestination = Routes.HomeScreen,
+            enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(300)
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(300)
+                ) + fadeOut(tween(300))
+            },
+            popEnterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(300)
+                )
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(300)
+                )
+            }
         ) {
 
-            composable<Routes.HomeScreen> {
+            composable<Routes.HomeScreen>(
+                enterTransition = { fadeIn(tween(200)) },
+                exitTransition = { fadeOut(tween(200)) }
+            ) {
                 HomeScreen(navController)
             }
 
-            composable<Routes.FileScreen> {
+            composable<Routes.FileScreen>(
+                enterTransition = { fadeIn(tween(200)) },
+                exitTransition = { fadeOut(tween(200)) }
+            ) {
                 FileScreen(navController)
             }
 
-            composable<Routes.TemplateScreen> {
+            composable<Routes.TemplateScreen>(
+                enterTransition = { fadeIn(tween(200)) },
+                exitTransition = { fadeOut(tween(200)) }) {
                 TemplateScreen(navController)
             }
 
-            composable<Routes.SettingScreen> {
+            composable<Routes.SettingScreen>(
+                enterTransition = { fadeIn(tween(200)) },
+                exitTransition = { fadeOut(tween(200)) }) {
                 SettingScreen(navController)
             }
 

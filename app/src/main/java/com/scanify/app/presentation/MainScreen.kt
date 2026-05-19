@@ -1,5 +1,9 @@
 package com.scanify.app.presentation
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -16,7 +20,21 @@ fun MainScreen(
     content: @Composable () -> Unit
 ) {
     Scaffold(
-        bottomBar = { NavBar(navController, selectedTab) }
+        bottomBar = {
+            AnimatedVisibility(
+                visible = showBottomBar,
+                enter = slideInVertically(
+                    animationSpec = tween(300),
+                    initialOffsetY = { it }
+                ),
+                exit = slideOutVertically(
+                    animationSpec = tween(300),
+                    targetOffsetY = { it }
+                )
+            ) {
+                NavBar(navController, selectedTab)
+            }
+        }
     ) { innerPadding ->
         Box(
             modifier = Modifier.padding(
