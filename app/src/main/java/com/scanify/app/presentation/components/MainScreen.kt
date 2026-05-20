@@ -8,8 +8,11 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -40,6 +43,28 @@ fun MainScreen(
                 )
             ) {
                 NavBar(navController, selectedTab)
+            }
+        },
+        topBar = {
+            AnimatedVisibility(
+                visible = showFAB,
+                enter = slideInVertically(
+                    animationSpec = tween(300),
+                    initialOffsetY = { -it }
+                ),
+                exit = slideOutVertically(
+                    animationSpec = tween(300),
+                    targetOffsetY = { -it }
+                )
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.background)
+                        .padding(WindowInsets.statusBars.asPaddingValues())
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    CustomSearchBar()
+                }
             }
         },
         floatingActionButton = {
