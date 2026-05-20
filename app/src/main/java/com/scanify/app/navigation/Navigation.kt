@@ -12,11 +12,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.scanify.app.presentation.FileScreen
-import com.scanify.app.presentation.HomeScreen
-import com.scanify.app.presentation.MainScreen
-import com.scanify.app.presentation.SettingScreen
-import com.scanify.app.presentation.TemplateScreen
+import com.scanify.app.presentation.file.FileScreen
+import com.scanify.app.presentation.home.HomeScreen
+import com.scanify.app.presentation.components.MainScreen
+import com.scanify.app.presentation.setting.SettingScreen
+import com.scanify.app.presentation.template.TemplateScreen
 
 @Composable
 fun Navigation(modifier: Modifier = Modifier) {
@@ -38,10 +38,14 @@ fun Navigation(modifier: Modifier = Modifier) {
             currentDestination?.hasRoute<Routes.TemplateScreen>() == true ||
             currentDestination?.hasRoute<Routes.SettingScreen>() == true
 
+    val showFAB =
+        currentDestination?.hasRoute<Routes.HomeScreen>() == true || currentDestination?.hasRoute<Routes.FileScreen>() == true
+
     MainScreen(
         navController = navController,
         selectedTab = selectedTab,
-        showBottomBar = showBottomBar
+        showBottomBar = showBottomBar,
+        showFAB = showFAB
     ) {
         NavHost(
             navController = navController,

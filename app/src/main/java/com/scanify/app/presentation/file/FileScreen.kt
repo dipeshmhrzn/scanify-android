@@ -1,4 +1,4 @@
-package com.scanify.app.presentation
+package com.scanify.app.presentation.file
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,12 +10,13 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 
 @Composable
-fun TemplateScreen(navController: NavHostController) {
+fun FileScreen(navController: NavHostController) {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Template Screen")
+        Text("File Screen")
     }
 }

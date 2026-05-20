@@ -1,4 +1,4 @@
-package com.scanify.app.presentation
+package com.scanify.app.presentation.setting
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,13 +10,12 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 
 @Composable
-fun FileScreen(navController: NavHostController) {
+fun SettingScreen(navController: NavHostController) {
     Column(
-        modifier = Modifier
-            .fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("File Screen")
+        Text("Setting Screen")
     }
 }
