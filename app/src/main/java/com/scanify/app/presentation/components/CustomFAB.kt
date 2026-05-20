@@ -19,7 +19,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.scanify.app.ui.theme.BrandGradient
 
-@Preview(showBackground = true)
 @Composable
 fun CustomFAB() {
 
