@@ -61,7 +61,7 @@ fun MainScreen(
                     modifier = Modifier
                         .background(MaterialTheme.colorScheme.background)
                         .padding(WindowInsets.statusBars.asPaddingValues())
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .padding(top = 16.dp, start = 16.dp, end = 16.dp)
                 ) {
                     CustomSearchBar()
                 }
