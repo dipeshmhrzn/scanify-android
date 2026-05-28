@@ -42,7 +42,7 @@ fun RecentFileCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = {})
-            .padding(start = 8.dp, top = 12.dp, bottom = 12.dp)
+            .padding(8.dp)
 
     ) {
         Row(
@@ -97,7 +97,7 @@ fun RecentFileCard(
                         Text(
                             text = fileType,
                             style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant // Neutral tint looks cleaner here
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Text(

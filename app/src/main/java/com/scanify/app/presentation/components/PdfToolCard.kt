@@ -23,6 +23,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.scanify.app.R
 
 @Composable
 fun PdfToolCard(
@@ -44,13 +45,16 @@ fun PdfToolCard(
                 modifier = Modifier
                     .size(56.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .5f)),
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .3f)),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
                     painter = painterResource(pdfTool.image),
                     contentDescription = null,
-                    modifier = Modifier.size(40.dp),
+                    modifier = when(pdfTool.image){
+                        R.drawable.compress , R.drawable.watermark -> Modifier.size(28.dp)
+                        else -> Modifier.size(40.dp)
+                    },
                     contentScale = ContentScale.Fit,
                     colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.onSurfaceVariant)
                 )
