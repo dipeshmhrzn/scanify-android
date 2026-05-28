@@ -11,32 +11,37 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.BrandingWatermark
+import androidx.compose.material.icons.rounded.Compress
+import androidx.compose.material.icons.rounded.Draw
+import androidx.compose.material.icons.rounded.FolderZip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.scanify.app.R
 import com.scanify.app.navigation.Routes
 import com.scanify.app.presentation.components.NoFilesScreen
+import com.scanify.app.presentation.components.RecentFileCard
 import com.scanify.app.presentation.home.components.PdfTool
 import com.scanify.app.presentation.home.components.PdfToolCard
-import com.scanify.app.presentation.components.RecentFileCard
 import com.scanify.app.ui.theme.ScanifyTheme
 
 @Composable
 fun HomeScreen(navController: NavHostController) {
     val pdfTools = listOf(
-        PdfTool("Signature", R.drawable.signature),
-        PdfTool("Watermark", R.drawable.watermark),
-        PdfTool("Compress PDF", R.drawable.compress),
-        PdfTool("Merge Files", R.drawable.merge)
+        PdfTool("Signature", Icons.Rounded.Draw, Color(0xFF2196F3)),
+        PdfTool("Watermark", Icons.AutoMirrored.Rounded.BrandingWatermark, Color(0xFF9C27B0)),
+        PdfTool("Compress PDF", Icons.Rounded.Compress, Color(0xFF4CAF50)),
+        PdfTool("Merge Files", Icons.Rounded.FolderZip, Color(0xFFFF9800))
     )
 
     Column(
@@ -88,7 +93,8 @@ fun HomeScreen(navController: NavHostController) {
                                     }
                                     launchSingleTop = true
                                     restoreState = true
-                                }                            }
+                                }
+                            }
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }

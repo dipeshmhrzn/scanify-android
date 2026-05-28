@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -27,6 +28,7 @@ fun QuickImportActionCard(
     modifier: Modifier = Modifier,
     title: String,
     icon: ImageVector,
+    iconBgColor: Color,
     onClick: () -> Unit = {}
 ) {
 
@@ -34,7 +36,7 @@ fun QuickImportActionCard(
         modifier = modifier
             .clip(RoundedCornerShape(20.dp))
             .background(
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
             )
             .clickable { onClick() }
             .padding(vertical = 20.dp, horizontal = 16.dp),
@@ -46,16 +48,14 @@ fun QuickImportActionCard(
             modifier = Modifier
                 .size(56.dp)
                 .clip(CircleShape)
-                .background(
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-                ),
+                .background(iconBgColor),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = title,
                 modifier = Modifier.size(30.dp),
-                tint = MaterialTheme.colorScheme.primary
+                tint = Color.White
             )
         }
 

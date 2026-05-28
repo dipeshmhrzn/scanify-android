@@ -65,7 +65,7 @@ fun GridFileCard(
                     painter = painterResource(R.drawable.prev),
                     contentDescription = "Scanned Document Preview",
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.FillBounds
                 )
 
                 Box(

@@ -33,13 +33,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.scanify.app.presentation.file.components.QuickImportActionCard
 import com.scanify.app.presentation.components.GridFileCard
 import com.scanify.app.presentation.components.NoFilesScreen
+import com.scanify.app.presentation.file.components.QuickImportActionCard
 import com.scanify.app.ui.theme.ScanifyTheme
 
 
@@ -70,13 +71,15 @@ fun FileScreen(navController: NavHostController) {
             QuickImportActionCard(
                 modifier = Modifier.weight(1f),
                 title = "Import Files",
-                icon = Icons.Default.UploadFile
+                icon = Icons.Default.UploadFile,
+                iconBgColor = Color(0xFF2196F3)
             )
 
             QuickImportActionCard(
                 modifier = Modifier.weight(1f),
                 title = "Import Images",
-                icon = Icons.Default.Image
+                icon = Icons.Default.Image,
+                iconBgColor = Color(0xFF9C27B0)
             )
         }
 

@@ -1,6 +1,5 @@
 package com.scanify.app.presentation.home.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -12,18 +11,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.scanify.app.R
 
 @Composable
 fun PdfToolCard(
@@ -32,7 +30,8 @@ fun PdfToolCard(
 ) {
 
     Box(
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
+            .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = {})
             .padding(vertical = 6.dp),
@@ -45,22 +44,18 @@ fun PdfToolCard(
                 modifier = Modifier
                     .size(56.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .3f)),
+                    .background(pdfTool.bgColor),
                 contentAlignment = Alignment.Center
             ) {
-                Image(
-                    painter = painterResource(pdfTool.image),
+                Icon(
+                    imageVector = pdfTool.icon,
                     contentDescription = null,
-                    modifier = when(pdfTool.image){
-                        R.drawable.compress , R.drawable.watermark -> Modifier.size(28.dp)
-                        else -> Modifier.size(40.dp)
-                    },
-                    contentScale = ContentScale.Fit,
-                    colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    modifier = Modifier.size(30.dp),
+                    tint = Color.White
                 )
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = pdfTool.label,
                 maxLines = 1,
@@ -74,5 +69,6 @@ fun PdfToolCard(
 
 data class PdfTool(
     val label: String,
-    val image: Int
+    val icon: ImageVector,
+    val bgColor: Color
 )
