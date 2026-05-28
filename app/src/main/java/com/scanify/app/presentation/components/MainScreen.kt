@@ -17,8 +17,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
+import com.scanify.app.presentation.file.FileScreen
+import com.scanify.app.ui.theme.ScanifyTheme
 
 @Composable
 fun MainScreen(
@@ -61,7 +65,7 @@ fun MainScreen(
                     modifier = Modifier
                         .background(MaterialTheme.colorScheme.background)
                         .padding(WindowInsets.statusBars.asPaddingValues())
-                        .padding(top = 16.dp, start = 16.dp, end = 16.dp)
+                        .padding( 16.dp)
                 ) {
                     CustomSearchBar()
                 }
@@ -86,6 +90,22 @@ fun MainScreen(
                 )
         ) {
             content()
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun MainPreview() {
+    val navController = rememberNavController()
+    ScanifyTheme {
+        MainScreen(
+            navController = navController,
+            selectedTab = "Files",
+            showBottomBar = true,
+            showFAB = true
+        ){
+            FileScreen(navController)
         }
     }
 }

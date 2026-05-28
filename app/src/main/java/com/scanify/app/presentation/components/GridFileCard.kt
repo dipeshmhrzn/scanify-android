@@ -157,12 +157,19 @@ fun GridFileCard(
                     Text(
                         text = fileSize,
                         style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.outline
+                        color = MaterialTheme.colorScheme.outline,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
                     )
+                    Spacer(modifier = Modifier.size(8.dp))
                     Text(
                         text = date,
                         style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.outline
+                        color = MaterialTheme.colorScheme.outline,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+
                     )
                 }
             }
