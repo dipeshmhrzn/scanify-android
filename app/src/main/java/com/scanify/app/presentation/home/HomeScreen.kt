@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.scanify.app.R
+import com.scanify.app.navigation.Routes
 import com.scanify.app.presentation.components.NoFilesScreen
 import com.scanify.app.presentation.components.PdfTool
 import com.scanify.app.presentation.components.PdfToolCard
@@ -81,7 +82,14 @@ fun HomeScreen(navController: NavHostController) {
                         textDecoration = TextDecoration.Underline,
                         modifier = Modifier
                             .clip(RoundedCornerShape(4.dp))
-                            .clickable { }
+                            .clickable {
+                                navController.navigate(Routes.FileScreen) {
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }                            }
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
