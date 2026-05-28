@@ -1,6 +1,5 @@
 package com.scanify.app.presentation.home
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,8 +25,8 @@ import androidx.navigation.compose.rememberNavController
 import com.scanify.app.R
 import com.scanify.app.navigation.Routes
 import com.scanify.app.presentation.components.NoFilesScreen
-import com.scanify.app.presentation.components.PdfTool
-import com.scanify.app.presentation.components.PdfToolCard
+import com.scanify.app.presentation.home.components.PdfTool
+import com.scanify.app.presentation.home.components.PdfToolCard
 import com.scanify.app.presentation.components.RecentFileCard
 import com.scanify.app.ui.theme.ScanifyTheme
 

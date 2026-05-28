@@ -37,7 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.scanify.app.presentation.components.QuickImportActionCard
+import com.scanify.app.presentation.file.components.QuickImportActionCard
 import com.scanify.app.presentation.components.GridFileCard
 import com.scanify.app.presentation.components.NoFilesScreen
 import com.scanify.app.ui.theme.ScanifyTheme
