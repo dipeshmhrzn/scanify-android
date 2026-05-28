@@ -23,7 +23,7 @@ fun NavBar(navController: NavHostController, key: String) {
     val navItems = listOf(
         NavItem("Home", Icons.Default.Home, Routes.HomeScreen),
         NavItem("Files", Icons.Default.Description, Routes.FileScreen),
-        NavItem("Templates", Icons.Default.DashboardCustomize, Routes.TemplateScreen),
+//        NavItem("Templates", Icons.Default.DashboardCustomize, Routes.TemplateScreen),
         NavItem("Settings", Icons.Default.Tune, Routes.SettingScreen)
     )
 
@@ -38,7 +38,7 @@ fun NavBar(navController: NavHostController, key: String) {
                 icon = {
                     Icon(
                         imageVector = item.icon,
-                        contentDescription = "Home icon"
+                        contentDescription = "${item.title} icon"
                     )
                 },
                 label = {

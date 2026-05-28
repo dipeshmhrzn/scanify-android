@@ -39,6 +39,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.scanify.app.presentation.components.QuickImportActionCard
 import com.scanify.app.presentation.components.GridFileCard
+import com.scanify.app.presentation.components.NoFilesScreen
 import com.scanify.app.ui.theme.ScanifyTheme
 
 
@@ -49,6 +50,8 @@ fun FileScreen(navController: NavHostController) {
     var isGridView by remember { mutableStateOf(true) }
 
     val fileCategories = listOf("All", "PDF", "DOCX", "JPG")
+
+    val isWorkSpaceEmpty = false
 
     Column(
         modifier = Modifier
@@ -77,85 +80,95 @@ fun FileScreen(navController: NavHostController) {
             )
         }
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
-            LazyRow(
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+        if (isWorkSpaceEmpty) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                NoFilesScreen()
+            }
+        } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                items(fileCategories) { category ->
-                    val isSelected = category == selectedCategory
 
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(100.dp))
-                            .background(
-                                color = if (isSelected) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.surfaceVariant
+                LazyRow(
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    items(fileCategories) { category ->
+                        val isSelected = category == selectedCategory
+
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(100.dp))
+                                .background(
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.surfaceVariant
+                                )
+                                .border(
+                                    width = 1.dp,
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                    shape = RoundedCornerShape(100.dp)
+                                )
+                                .clickable { selectedCategory = category }
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = category,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                                else MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            .border(
-                                width = 1.dp,
-                                color = if (isSelected) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                                shape = RoundedCornerShape(100.dp)
-                            )
-                            .clickable { selectedCategory = category }
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = category,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary
-                            else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        }
                     }
+                }
+
+                Row(
+                    modifier = Modifier.padding(end = 16.dp, start = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.GridView,
+                        contentDescription = "Switch to Grid Layout",
+                        modifier = Modifier
+                            .size(24.dp)
+                            .clickable { isGridView = true },
+                        tint = if (isGridView) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.outline
+                    )
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ViewList,
+                        contentDescription = "Switch to List Layout",
+                        modifier = Modifier
+                            .size(24.dp)
+                            .clickable { isGridView = false },
+                        tint = if (!isGridView) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.outline
+                    )
                 }
             }
 
-            Row(
-                modifier = Modifier.padding(end = 16.dp, start = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-                verticalAlignment = Alignment.CenterVertically
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 160.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxSize()
             ) {
-                Icon(
-                    imageVector = Icons.Default.GridView,
-                    contentDescription = "Switch to Grid Layout",
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clickable { isGridView = true },
-                    tint = if (isGridView) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.outline
-                )
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ViewList,
-                    contentDescription = "Switch to List Layout",
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clickable { isGridView = false },
-                    tint = if (!isGridView) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.outline
-                )
-            }
-        }
-
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 160.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxSize()
-        ) {
-            items(10) {
-                GridFileCard()
+                items(10) {
+                    GridFileCard()
+                }
             }
         }
     }
