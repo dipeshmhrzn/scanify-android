@@ -43,7 +43,6 @@ fun RecentFileCard(
             .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = {})
             .padding(8.dp)
-
     ) {
         Row(
             modifier = Modifier
