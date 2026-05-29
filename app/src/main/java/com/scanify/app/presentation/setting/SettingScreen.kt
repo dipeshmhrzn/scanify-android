@@ -10,38 +10,40 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Chat
 import androidx.compose.material.icons.rounded.Brightness4
 import androidx.compose.material.icons.rounded.BugReport
-import androidx.compose.material.icons.rounded.Chat
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.scanify.app.presentation.setting.components.ChevronIcon
 import com.scanify.app.presentation.setting.components.SectionTitle
 import com.scanify.app.presentation.setting.components.SettingsCard
 import com.scanify.app.presentation.setting.components.SettingsRow
+import com.scanify.app.presentation.viewmodels.SettingViewModel
 import com.scanify.app.ui.theme.BrandGradient
-import com.scanify.app.ui.theme.ThemeMode
 
 
 @Composable
-fun SettingScreen(navController: NavHostController) {
+fun SettingScreen(
+    navController: NavHostController,
+    viewModel: SettingViewModel = hiltViewModel()
+) {
 
-    var currentThemeMode by remember { mutableStateOf(ThemeMode.SYSTEM) }
+    val currentThemeMode by viewModel.currentThemeMode.collectAsStateWithLifecycle()
 
     LazyColumn(
         modifier = Modifier
@@ -64,11 +66,7 @@ fun SettingScreen(navController: NavHostController) {
                     } • Tap to change",
                     showDivider = false,
                     onClick = {
-                        currentThemeMode = when (currentThemeMode) {
-                            ThemeMode.SYSTEM -> ThemeMode.LIGHT
-                            ThemeMode.LIGHT -> ThemeMode.DARK
-                            ThemeMode.DARK -> ThemeMode.SYSTEM
-                        }
+                        viewModel.cycleTheme()
                     },
                     trailingContent = {
                         Box(
@@ -78,7 +76,8 @@ fun SettingScreen(navController: NavHostController) {
                                 .padding(horizontal = 16.dp, vertical = 6.dp)
                         ) {
                             Text(
-                                text = currentThemeMode.name.lowercase().replaceFirstChar { it.uppercase() },
+                                text = currentThemeMode.name.lowercase()
+                                    .replaceFirstChar { it.uppercase() },
                                 color = Color.White,
                                 style = MaterialTheme.typography.labelLarge
                             )
@@ -129,7 +128,7 @@ fun SettingScreen(navController: NavHostController) {
                     }
                 )
                 SettingsRow(
-                    icon = Icons.Rounded.Chat,
+                    icon = Icons.AutoMirrored.Rounded.Chat,
                     iconBgColor = Color(0xFF4CAF50),
                     title = "Feedback",
                     subtitle = "Share your thoughts",
