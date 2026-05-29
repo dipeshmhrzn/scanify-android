@@ -1,9 +1,7 @@
 package com.scanify.app.presentation.components
 
-import androidx.annotation.ContentView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -36,13 +33,16 @@ import com.scanify.app.R
 
 @Preview(showBackground = true)
 @Composable
-fun RecentFileCard(
+fun ListFileCard(
     modifier: Modifier = Modifier,
     fileName: String = "Invoice_March_2026",
-    fileType: String = "PDF",
+    fileType: String = "JPG",
     fileSize: String = "2.4 MB",
     date: String = "Today",
 ) {
+
+    val (_, iconBgColor) = getFileTypeColors(fileType)
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -59,9 +59,7 @@ fun RecentFileCard(
                 modifier = Modifier
                     .size(56.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(
-                        color = MaterialTheme.colorScheme.primaryContainer
-                    ),
+                    .background(iconBgColor),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
@@ -89,36 +87,14 @@ fun RecentFileCard(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .border(
-                                width = 1.dp,
-                                color = MaterialTheme.colorScheme.outlineVariant,
-                                shape = RoundedCornerShape(6.dp)
-                            )
-                            .padding(horizontal = 6.dp, vertical = 2.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = fileType,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    FileTypeBadge(fileType = fileType)
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
                     Text(
-                        text = fileSize,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "•",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = date,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = "$fileSize  •  $date",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.outline
                     )
                 }
             }

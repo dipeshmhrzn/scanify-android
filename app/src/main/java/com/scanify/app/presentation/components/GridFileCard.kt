@@ -2,7 +2,6 @@ package com.scanify.app.presentation.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,31 +25,29 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.scanify.app.R
-import com.scanify.app.ui.theme.BrandGradient
 
 @Preview(showBackground = true)
 @Composable
 fun GridFileCard(
     modifier: Modifier = Modifier,
     fileName: String = "Invoice_March_2026",
-    fileType: String = "PDF",
+    fileType: String = "DOCX",
     fileSize: String = "2.4 MB",
     date: String = "Today",
 ) {
+    val (_, topBgColor) = getFileTypeColors(fileType)
 
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
 
@@ -59,95 +56,52 @@ fun GridFileCard(
                     .fillMaxWidth()
                     .height(140.dp)
                     .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                    .background(topBgColor.copy(alpha = 0.5f))
             ) {
 
                 Image(
                     painter = painterResource(R.drawable.prev),
-                    contentDescription = "Scanned Document Preview",
-                    modifier = Modifier.fillMaxSize(),
+                    contentDescription = "Document Icon",
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .fillMaxSize(),
                     contentScale = ContentScale.FillBounds
                 )
 
-                Box(
+                FileTypeBadge(
+                    fileType = fileType,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(65.dp)
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.Black.copy(alpha = 0.4f),
-                                    Color.Transparent
-                                )
-                            )
-                        )
+                        .align(Alignment.TopStart)
+                        .padding(12.dp)
                 )
 
-                Row(
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "File Options",
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 12.dp)
-                        .align(Alignment.TopCenter),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-
-                    Box(
-                        modifier = Modifier
-                            .background(
-                                brush = Brush.linearGradient(colors = BrandGradient),
-                                shape = RoundedCornerShape(6.dp),
-                                alpha = .8f
-                            )
-                            .border(
-                                width = 1.dp,
-                                color = Color.White.copy(alpha = 0.2f),
-                                shape = RoundedCornerShape(6.dp)
-                            )
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = fileType.uppercase(),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.White,
-                            modifier = Modifier.padding(bottom = 1.dp)
-                        )
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .background(
-                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable(onClick = {}),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "File Options",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
+                        .align(Alignment.TopEnd)
+                        .padding(12.dp)
+                        .size(24.dp)
+                        .clickable { }
+                )
             }
 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(horizontal = 14.dp, vertical = 12.dp)
             ) {
                 Text(
                     text = fileName,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -156,20 +110,13 @@ fun GridFileCard(
                 ) {
                     Text(
                         text = fileSize,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.outline,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.outline
                     )
-                    Spacer(modifier = Modifier.size(8.dp))
                     Text(
                         text = date,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.outline,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.outline
                     )
                 }
             }

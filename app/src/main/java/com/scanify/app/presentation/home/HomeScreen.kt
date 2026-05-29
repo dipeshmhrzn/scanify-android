@@ -1,5 +1,6 @@
 package com.scanify.app.presentation.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,11 +30,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.scanify.app.navigation.Routes
+import com.scanify.app.presentation.components.ListFileCard
 import com.scanify.app.presentation.components.NoFilesScreen
-import com.scanify.app.presentation.components.RecentFileCard
 import com.scanify.app.presentation.home.components.PdfTool
 import com.scanify.app.presentation.home.components.PdfToolCard
 import com.scanify.app.ui.theme.ScanifyTheme
+import com.scanify.app.ui.theme.ThemeMode
 
 @Composable
 fun HomeScreen(navController: NavHostController) {
@@ -44,10 +46,13 @@ fun HomeScreen(navController: NavHostController) {
         PdfTool("Merge Files", Icons.Rounded.FolderZip, Color(0xFFFF9800))
     )
 
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-    ) {
+            .background(MaterialTheme.colorScheme.background),
+
+        ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -103,7 +108,7 @@ fun HomeScreen(navController: NavHostController) {
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(15) {
-                        RecentFileCard()
+                        ListFileCard()
                     }
                 }
             }
@@ -122,7 +127,7 @@ fun HomeScreen(navController: NavHostController) {
 @Preview(showBackground = true)
 @Composable
 private fun HomePreview() {
-    ScanifyTheme {
+    ScanifyTheme(ThemeMode.DARK) {
         HomeScreen(rememberNavController())
     }
 }
