@@ -105,7 +105,7 @@ fun HomeScreen(navController: NavHostController) {
                 }
                 LazyColumn(
                     contentPadding = PaddingValues(vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(15) {
                         ListFileCard()
