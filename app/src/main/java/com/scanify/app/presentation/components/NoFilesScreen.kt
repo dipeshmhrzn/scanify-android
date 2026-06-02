@@ -24,9 +24,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
-@Preview(showBackground = true)
 @Composable
-fun NoFilesScreen() {
+fun NoFilesScreen(text: String) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -57,7 +56,7 @@ fun NoFilesScreen() {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "No Recent Files",
+            text = "No $text Files Found.",
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground
         )

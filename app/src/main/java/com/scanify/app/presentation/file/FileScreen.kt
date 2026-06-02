@@ -26,7 +26,6 @@ import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.UploadFile
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -48,10 +47,10 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.scanify.app.navigation.Routes
-import com.scanify.app.presentation.components.filecomponents.cards.GridFileCard
-import com.scanify.app.presentation.components.filecomponents.cards.ListFileCard
 import com.scanify.app.presentation.components.LoadingIndicator
 import com.scanify.app.presentation.components.NoFilesScreen
+import com.scanify.app.presentation.components.filecomponents.cards.GridFileCard
+import com.scanify.app.presentation.components.filecomponents.cards.ListFileCard
 import com.scanify.app.presentation.file.components.QuickImportActionCard
 import com.scanify.app.presentation.util.OfficeFileOpener
 import com.scanify.app.presentation.viewmodels.FileNavigationEvent
@@ -181,7 +180,7 @@ fun FileScreen(
                             modifier = Modifier
                                 .fillMaxWidth(),
                             contentAlignment = Alignment.Center
-                        ) { NoFilesScreen() }
+                        ) { NoFilesScreen("Recent") }
                     }
                 }
 
@@ -254,36 +253,51 @@ fun FileScreen(
                         }
                     }
 
-                    if (isGridView) {
-                        val chunkedDocs = filteredDocs.chunked(2)
-                        items(
-                            items = chunkedDocs,
-                            key = { rowDocs -> rowDocs.joinToString { it.id.toString() } }
-                        ) { rowDocs ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    if (filteredDocs.isEmpty()) {
+                        item {
+                            Spacer(modifier = Modifier.height(150.dp))
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(),
+                                contentAlignment = Alignment.Center
                             ) {
-                                rowDocs.forEach { doc ->
-                                    GridFileCard(
-                                        document = doc,
-                                        onClick = { viewModel.onDocumentClick(doc) },
-                                        onOptionsClick = {},
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                }
-                                if (rowDocs.size == 1) {
-                                    Spacer(modifier = Modifier.weight(1f))
-                                }
+                                val emptyText = if (selectedCategory == "All") "Recent" else selectedCategory
+                                NoFilesScreen(emptyText)
                             }
+
                         }
                     } else {
-                        items(filteredDocs, key = { it.id }) { doc ->
-                            val onCardClick =
-                                remember(doc) { { viewModel.onDocumentClick(doc) } }
-                            ListFileCard(
-                                document = doc, onClick = onCardClick
-                            )
+                        if (isGridView) {
+                            val chunkedDocs = filteredDocs.chunked(2)
+                            items(
+                                items = chunkedDocs,
+                                key = { rowDocs -> rowDocs.joinToString { it.id.toString() } }
+                            ) { rowDocs ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    rowDocs.forEach { doc ->
+                                        GridFileCard(
+                                            document = doc,
+                                            onClick = { viewModel.onDocumentClick(doc) },
+                                            onOptionsClick = {},
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    }
+                                    if (rowDocs.size == 1) {
+                                        Spacer(modifier = Modifier.weight(1f))
+                                    }
+                                }
+                            }
+                        } else {
+                            items(filteredDocs, key = { it.id }) { doc ->
+                                val onCardClick =
+                                    remember(doc) { { viewModel.onDocumentClick(doc) } }
+                                ListFileCard(
+                                    document = doc, onClick = onCardClick
+                                )
+                            }
                         }
                     }
                 }

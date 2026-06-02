@@ -122,7 +122,7 @@ fun HomeScreen(
                         modifier = Modifier
                             .fillMaxWidth(),
                         contentAlignment = Alignment.Center
-                    ) { NoFilesScreen() }
+                    ) { NoFilesScreen("Recent") }
                 }
             }
 
