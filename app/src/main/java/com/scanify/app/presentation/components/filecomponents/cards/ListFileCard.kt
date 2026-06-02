@@ -34,13 +34,15 @@ import com.scanify.app.presentation.components.filecomponents.preview.DocumentTh
 fun ListFileCard(
     document: Document, onClick: () -> Unit, modifier: Modifier = Modifier
 ) {
-    val cardShape = RoundedCornerShape(16.dp)
+
+    val cardShape = remember { RoundedCornerShape(16.dp) }
+    val thumbShape = remember { RoundedCornerShape(12.dp) }
+    val optionBgShape = remember { RoundedCornerShape(8.dp) }
+
     val formattedDate = remember(document.createdAt) { formatDateString(document.createdAt) }
 
-    val displayFileType = if (document.isImageBundle) {
-        "IMG"
-    } else {
-        document.fileType
+    val displayFileType = remember(document.isImageBundle, document.fileType) {
+        if (document.isImageBundle) "IMG" else document.fileType
     }
 
     Card(
@@ -58,9 +60,8 @@ fun ListFileCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             DocumentThumbnail(
-                document = document, modifier = Modifier
-                    .size(64.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                document = document,
+                modifier = Modifier.size(64.dp).clip(thumbShape)
             )
 
             Spacer(modifier = Modifier.width(16.dp))

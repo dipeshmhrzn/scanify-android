@@ -81,6 +81,10 @@ fun FileScreen(
         }
     }
 
+    val chunkedDocs = remember(filteredDocs) {
+        filteredDocs.chunked(2)
+    }
+
     LaunchedEffect(Unit) {
         viewModel.navigationEvent.collect { event ->
             when (event) {
@@ -279,19 +283,19 @@ fun FileScreen(
                         }
                     } else {
                         if (isGridView) {
-                            val chunkedDocs = filteredDocs.chunked(2)
                             items(
                                 items = chunkedDocs,
-                                key = { rowDocs -> rowDocs.joinToString { it.id.toString() } }
+                                key = { rowDocs -> rowDocs.first().id }
                             ) { rowDocs ->
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
                                     rowDocs.forEach { doc ->
+                                        val onCardClick = remember(doc.id) { { viewModel.onDocumentClick(doc) } }
                                         GridFileCard(
                                             document = doc,
-                                            onClick = { viewModel.onDocumentClick(doc) },
+                                            onClick = onCardClick,
                                             onOptionsClick = {},
                                             modifier = Modifier.weight(1f)
                                         )
@@ -303,8 +307,7 @@ fun FileScreen(
                             }
                         } else {
                             items(filteredDocs, key = { it.id }) { doc ->
-                                val onCardClick =
-                                    remember(doc) { { viewModel.onDocumentClick(doc) } }
+                                val onCardClick = remember(doc.id) { { viewModel.onDocumentClick(doc) } }
                                 ListFileCard(
                                     document = doc, onClick = onCardClick
                                 )

@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -49,20 +48,30 @@ import com.scanify.app.presentation.viewmodels.FileNavigationEvent
 import com.scanify.app.presentation.viewmodels.FileUiState
 import com.scanify.app.presentation.viewmodels.FileViewModel
 
+private val StaticPdfTools = listOf(
+    PdfTool("Signature", Icons.Rounded.Draw, Color(0xFF2196F3)),
+    PdfTool("Watermark", Icons.AutoMirrored.Rounded.BrandingWatermark, Color(0xFF9C27B0)),
+    PdfTool("Compress PDF", Icons.Rounded.Compress, Color(0xFF4CAF50)),
+    PdfTool("Merge Files", Icons.Rounded.FolderZip, Color(0xFFFF9800))
+)
+
 @Composable
 fun HomeScreen(
     navController: NavHostController,
     viewModel: FileViewModel = hiltViewModel()
 ) {
-    val pdfTools = listOf(
-        PdfTool("Signature", Icons.Rounded.Draw, Color(0xFF2196F3)),
-        PdfTool("Watermark", Icons.AutoMirrored.Rounded.BrandingWatermark, Color(0xFF9C27B0)),
-        PdfTool("Compress PDF", Icons.Rounded.Compress, Color(0xFF4CAF50)),
-        PdfTool("Merge Files", Icons.Rounded.FolderZip, Color(0xFFFF9800))
-    )
 
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    val recentDocs = remember(uiState) {
+        val state = uiState
+        if (state is FileUiState.Success) {
+            state.documents.take(10)
+        } else {
+            emptyList()
+        }
+    }
 
     val launchScanner = rememberDocumentScanner { imageUris, pdfUri ->
         viewModel.handleScannedDocuments(imageUris, pdfUri)
@@ -99,10 +108,8 @@ fun HomeScreen(
                     .fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                pdfTools.forEach { tool ->
-                    PdfToolCard(
-                        tool, modifier = Modifier.weight(1f)
-                    )
+                StaticPdfTools.forEach { tool ->
+                    PdfToolCard(tool, modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -132,48 +139,39 @@ fun HomeScreen(
 
             is FileUiState.Success -> {
                 item {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = "Recent Documents",
-                                style = MaterialTheme.typography.titleLarge,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                            Text(
-                                text = "See all",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.primary,
-                                textDecoration = TextDecoration.Underline,
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .clickable {
-                                        navController.navigate(Routes.FileScreen) {
-                                            popUpTo(navController.graph.startDestinationId) {
-                                                saveState = true
-                                            }
-                                            launchSingleTop = true
-                                            restoreState = true
+                        Text(
+                            text = "Recent Documents",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Text(
+                            text = "See all",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            textDecoration = TextDecoration.Underline,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .clickable {
+                                    navController.navigate(Routes.FileScreen) {
+                                        popUpTo(navController.graph.startDestinationId) {
+                                            saveState = true
                                         }
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                            )
-                        }
+                                }
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
                     }
                 }
-                val recentDocs = state.documents.take(10)
 
                 items(recentDocs, key = { it.id }) { doc ->
-                    val onCardClick =
-                        remember(doc) { { viewModel.onDocumentClick(doc) } }
-                    ListFileCard(
-                        document = doc, onClick = onCardClick
-                    )
+                    ListFileCard(document = doc, onClick = { viewModel.onDocumentClick(doc) })
                 }
                 item {
                     Spacer(modifier = Modifier.height(16.dp))

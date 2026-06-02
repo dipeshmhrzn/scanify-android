@@ -42,40 +42,38 @@ fun GridFileCard(
     onOptionsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val (_, topBgColor) = getFileTypeColors(document.fileType)
-    val cardShape = RoundedCornerShape(16.dp)
-    val formattedDate = remember(document.createdAt) { formatDateString(document.createdAt) }
 
-    val displayFileType = if (document.isImageBundle) {
-        "IMG"
-    } else {
-        document.fileType
+    val fileColors = getFileTypeColors(document.fileType)
+    val topBgColor = fileColors.second
+
+    val cardShape = remember { RoundedCornerShape(16.dp) }
+    val topImageShape = remember { RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp) }
+
+    val formattedDate = remember(document.createdAt) { formatDateString(document.createdAt) }
+    val displayFileType = remember(document.isImageBundle, document.fileType) {
+        if (document.isImageBundle) "IMG" else document.fileType
     }
 
     Card(
         shape = cardShape,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = modifier
-            .fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                onClick()
-            }) {
-
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+        ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(140.dp)
-                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                    .clip(topImageShape)
                     .background(topBgColor.copy(alpha = 0.5f))
             ) {
 
-                DocumentThumbnail(
-                    document = document, modifier = Modifier.fillMaxSize()
-                )
+                DocumentThumbnail(document = document, modifier = Modifier.fillMaxSize())
 
                 FileTypeBadge(
                     fileType = displayFileType,

@@ -5,6 +5,7 @@ import android.content.Context
 import coil3.ImageLoader
 import coil3.SingletonImageLoader
 import com.scanify.app.presentation.util.DocumentPageFetcher
+import com.scanify.app.presentation.util.DocumentPageKeyer
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
@@ -12,6 +13,7 @@ class ScanifyApp : Application(), SingletonImageLoader.Factory {
     override fun newImageLoader(context: Context): ImageLoader {
         return ImageLoader.Builder(context)
             .components {
+                add(DocumentPageKeyer())
                 add(DocumentPageFetcher.Factory())
             }
             .build()
