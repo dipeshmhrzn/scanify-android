@@ -1,4 +1,4 @@
-package com.scanify.app.presentation.components
+package com.scanify.app.presentation.components.filecomponents.badge
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box

@@ -2,8 +2,8 @@ package com.scanify.app.presentation.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.scanify.app.domain.usecases.GetThemeModeUseCase
-import com.scanify.app.domain.usecases.UpdateThemeModeUseCase
+import com.scanify.app.domain.usecases.themeusecases.GetThemeModeUseCase
+import com.scanify.app.domain.usecases.themeusecases.UpdateThemeModeUseCase
 import com.scanify.app.ui.theme.ThemeMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted

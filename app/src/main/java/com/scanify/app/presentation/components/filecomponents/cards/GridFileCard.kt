@@ -1,6 +1,5 @@
-package com.scanify.app.presentation.components
+package com.scanify.app.presentation.components.filecomponents.cards
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,34 +21,49 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.scanify.app.R
+import com.scanify.app.domain.model.Document
+import com.scanify.app.presentation.components.filecomponents.badge.FileTypeBadge
+import com.scanify.app.presentation.components.filecomponents.badge.getFileTypeColors
+import com.scanify.app.presentation.components.filecomponents.preview.DocumentThumbnail
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
-@Preview(showBackground = true)
 @Composable
 fun GridFileCard(
-    modifier: Modifier = Modifier,
-    fileName: String = "Invoice_March_2026",
-    fileType: String = "DOCX",
-    fileSize: String = "2.4 MB",
-    date: String = "Today",
+    document: Document,
+    onClick: () -> Unit,
+    onOptionsClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val (_, topBgColor) = getFileTypeColors(fileType)
+    val (_, topBgColor) = getFileTypeColors(document.fileType)
+    val cardShape = RoundedCornerShape(16.dp)
+    val formattedDate = remember(document.createdAt) { formatDateString(document.createdAt) }
+
+    val displayFileType = if (document.isImageBundle) {
+        "IMG"
+    } else {
+        document.fileType
+    }
 
     Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = cardShape,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        modifier = modifier
+            .fillMaxWidth()
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                onClick()
+            }) {
 
             Box(
                 modifier = Modifier
@@ -59,17 +73,12 @@ fun GridFileCard(
                     .background(topBgColor.copy(alpha = 0.5f))
             ) {
 
-                Image(
-                    painter = painterResource(R.drawable.prev),
-                    contentDescription = "Document Icon",
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .fillMaxSize(),
-                    contentScale = ContentScale.FillBounds
+                DocumentThumbnail(
+                    document = document, modifier = Modifier.fillMaxSize()
                 )
 
                 FileTypeBadge(
-                    fileType = fileType,
+                    fileType = displayFileType,
                     modifier = Modifier
                         .align(Alignment.TopStart)
                         .padding(12.dp)
@@ -83,8 +92,9 @@ fun GridFileCard(
                         .align(Alignment.TopEnd)
                         .padding(12.dp)
                         .size(24.dp)
-                        .clickable { }
-                )
+                        .clickable {
+                            onOptionsClick()
+                        })
             }
 
             Column(
@@ -94,7 +104,7 @@ fun GridFileCard(
                     .padding(horizontal = 14.dp, vertical = 12.dp)
             ) {
                 Text(
-                    text = fileName,
+                    text = document.name,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onBackground,
                     maxLines = 1,
@@ -109,17 +119,28 @@ fun GridFileCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = fileSize,
+                        text = document.fileSize,
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.outline
                     )
                     Text(
-                        text = date,
+                        text = formattedDate,
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.outline
                     )
                 }
             }
         }
+    }
+}
+
+fun formatDateString(dateTime: LocalDateTime): String {
+    val fileDate = dateTime.toLocalDate()
+    val today = LocalDate.now()
+
+    return when (fileDate) {
+        today -> "Today"
+        today.minusDays(1) -> "Yesterday"
+        else -> fileDate.format(DateTimeFormatter.ofPattern("MMM yyyy"))
     }
 }

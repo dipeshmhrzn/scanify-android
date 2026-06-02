@@ -1,20 +1,24 @@
 package com.scanify.app.presentation.file
 
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -22,10 +26,12 @@ import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.UploadFile
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,153 +40,273 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
-import com.scanify.app.presentation.components.GridFileCard
+import com.scanify.app.navigation.Routes
+import com.scanify.app.presentation.components.filecomponents.cards.GridFileCard
+import com.scanify.app.presentation.components.filecomponents.cards.ListFileCard
+import com.scanify.app.presentation.components.LoadingIndicator
 import com.scanify.app.presentation.components.NoFilesScreen
 import com.scanify.app.presentation.file.components.QuickImportActionCard
-import com.scanify.app.ui.theme.ScanifyTheme
-
+import com.scanify.app.presentation.util.OfficeFileOpener
+import com.scanify.app.presentation.viewmodels.FileNavigationEvent
+import com.scanify.app.presentation.viewmodels.FileUiState
+import com.scanify.app.presentation.viewmodels.FileViewModel
 
 @Composable
-fun FileScreen(navController: NavHostController) {
+fun FileScreen(
+    navController: NavHostController, viewModel: FileViewModel = hiltViewModel()
+) {
+    val context = LocalContext.current
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    val isImporting by viewModel.isImporting.collectAsStateWithLifecycle()
 
     var selectedCategory by remember { mutableStateOf("All") }
     var isGridView by remember { mutableStateOf(true) }
+    val fileCategories = remember { listOf("All", "PDF", "DOCX", "PPTX", "XLSX") }
 
-    val fileCategories = listOf("All", "PDF", "DOCX", "JPG")
-
-    val isWorkSpaceEmpty = false
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-
-            QuickImportActionCard(
-                modifier = Modifier.weight(1f),
-                title = "Import Files",
-                icon = Icons.Default.UploadFile,
-                iconBgColor = Color(0xFF2196F3)
-            )
-
-            QuickImportActionCard(
-                modifier = Modifier.weight(1f),
-                title = "Import Images",
-                icon = Icons.Default.Image,
-                iconBgColor = Color(0xFF9C27B0)
-            )
-        }
-
-        if (isWorkSpaceEmpty) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                NoFilesScreen()
-            }
+    val filteredDocs = remember(uiState, selectedCategory) {
+        val state = uiState
+        if (state is FileUiState.Success) {
+            if (selectedCategory == "All") state.documents
+            else state.documents.filter { it.fileType.equals(selectedCategory, ignoreCase = true) }
         } else {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            emptyList()
+        }
+    }
 
-                LazyRow(
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    items(fileCategories) { category ->
-                        val isSelected = category == selectedCategory
-
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(100.dp))
-                                .background(
-                                    color = if (isSelected) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.surfaceVariant
-                                )
-                                .border(
-                                    width = 1.dp,
-                                    color = if (isSelected) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                                    shape = RoundedCornerShape(100.dp)
-                                )
-                                .clickable { selectedCategory = category }
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = category,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = if (isSelected) MaterialTheme.colorScheme.onPrimary
-                                else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
+    LaunchedEffect(Unit) {
+        viewModel.navigationEvent.collect { event ->
+            when (event) {
+                is FileNavigationEvent.NavigateToPreview -> {
+                    navController.navigate(Routes.PreviewScreen(id = event.documentId))
                 }
 
-                Row(
-                    modifier = Modifier.padding(end = 16.dp, start = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.GridView,
-                        contentDescription = "Switch to Grid Layout",
-                        modifier = Modifier
-                            .size(24.dp)
-                            .clickable { isGridView = true },
-                        tint = if (isGridView) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.outline
-                    )
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ViewList,
-                        contentDescription = "Switch to List Layout",
-                        modifier = Modifier
-                            .size(24.dp)
-                            .clickable { isGridView = false },
-                        tint = if (!isGridView) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.outline
-                    )
+                is FileNavigationEvent.OpenExternalFile -> {
+                    OfficeFileOpener.openFile(context, event.filePath, event.fileType)
                 }
-            }
 
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 160.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(10) {
-                    GridFileCard()
+                is FileNavigationEvent.ShowError -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
                 }
             }
         }
     }
-}
 
-@Preview(showBackground = true)
-@Composable
-private fun FilePreview() {
-    ScanifyTheme {
-        FileScreen(rememberNavController())
+    val documentPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenMultipleDocuments()
+    ) { uris ->
+        if (uris.isNotEmpty()) {
+            viewModel.importMultipleFiles(uris.map { it.toString() })
+        }
+    }
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickMultipleVisualMedia()
+    ) { uris ->
+        if (uris.isNotEmpty()) {
+            viewModel.importMultipleImages(uris.map { it.toString() })
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(horizontal = 16.dp),
+            contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    QuickImportActionCard(
+                        modifier = Modifier.weight(1f),
+                        title = "Import Files",
+                        icon = Icons.Default.UploadFile,
+                        iconBgColor = Color(0xFF2196F3),
+                        onClick = {
+                            documentPickerLauncher.launch(
+                                arrayOf(
+                                    "application/pdf",
+                                    "application/msword",
+                                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                                    "application/vnd.ms-excel",
+                                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                    "application/vnd.ms-powerpoint",
+                                    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                                    "text/plain",
+                                )
+                            )
+                        })
+
+                    QuickImportActionCard(
+                        modifier = Modifier.weight(1f),
+                        title = "Import Images",
+                        icon = Icons.Default.Image,
+                        iconBgColor = Color(0xFF9C27B0),
+                        onClick = {
+                            imagePickerLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        })
+                }
+            }
+
+            when (val state = uiState) {
+                is FileUiState.Loading -> {
+                    item {
+                        Spacer(modifier = Modifier.height(50.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) { LoadingIndicator() }
+                    }
+                }
+
+                is FileUiState.Empty -> {
+                    item {
+                        Spacer(modifier = Modifier.height(150.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) { NoFilesScreen() }
+                    }
+                }
+
+                is FileUiState.Success -> {
+
+                    stickyHeader {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.background)
+                                .padding(vertical = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            LazyRow(
+                                modifier = Modifier.weight(1f),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                items(fileCategories) { category ->
+                                    val isSelected = category == selectedCategory
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(100.dp))
+                                            .background(
+                                                color = if (isSelected) MaterialTheme.colorScheme.primary
+                                                else MaterialTheme.colorScheme.surfaceVariant
+                                            )
+                                            .border(
+                                                width = 1.dp,
+                                                color = if (isSelected) MaterialTheme.colorScheme.primary
+                                                else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                                shape = RoundedCornerShape(100.dp)
+                                            )
+                                            .clickable { selectedCategory = category }
+                                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                                        contentAlignment = Alignment.Center) {
+                                        Text(
+                                            text = category,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                                            else MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+
+                            Row(
+                                modifier = Modifier.padding(end = 16.dp, start = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.GridView,
+                                    contentDescription = "Switch to Grid Layout",
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .clickable { isGridView = true },
+                                    tint = if (isGridView) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                                )
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ViewList,
+                                    contentDescription = "Switch to List Layout",
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .clickable { isGridView = false },
+                                    tint = if (!isGridView) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                                )
+                            }
+                        }
+                    }
+
+                    if (isGridView) {
+                        val chunkedDocs = filteredDocs.chunked(2)
+                        items(
+                            items = chunkedDocs,
+                            key = { rowDocs -> rowDocs.joinToString { it.id.toString() } }
+                        ) { rowDocs ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                rowDocs.forEach { doc ->
+                                    GridFileCard(
+                                        document = doc,
+                                        onClick = { viewModel.onDocumentClick(doc) },
+                                        onOptionsClick = {},
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                                if (rowDocs.size == 1) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
+                        }
+                    } else {
+                        items(filteredDocs, key = { it.id }) { doc ->
+                            val onCardClick =
+                                remember(doc) { { viewModel.onDocumentClick(doc) } }
+                            ListFileCard(
+                                document = doc, onClick = onCardClick
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        if (isImporting) {
+            Dialog(
+                onDismissRequest = {},
+                properties = DialogProperties(
+                    dismissOnBackPress = false,
+                    dismissOnClickOutside = false,
+                    usePlatformDefaultWidth = false
+                )
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0xFF131324).copy(alpha = 0.85f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    LoadingIndicator()
+                }
+            }
+        }
     }
 }

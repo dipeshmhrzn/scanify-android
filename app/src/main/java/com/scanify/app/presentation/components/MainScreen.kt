@@ -17,12 +17,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
-import com.scanify.app.presentation.file.FileScreen
-import com.scanify.app.ui.theme.ScanifyTheme
 
 @Composable
 fun MainScreen(
@@ -34,38 +30,25 @@ fun MainScreen(
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             AnimatedVisibility(
-                visible = showBottomBar,
-                enter = slideInVertically(
-                    animationSpec = tween(300),
-                    initialOffsetY = { it }
-                ),
-                exit = slideOutVertically(
-                    animationSpec = tween(300),
-                    targetOffsetY = { it }
-                )
-            ) {
+                visible = showBottomBar, enter = slideInVertically(
+                animationSpec = tween(300), initialOffsetY = { it }), exit = slideOutVertically(
+                animationSpec = tween(300), targetOffsetY = { it })) {
                 NavBar(navController, selectedTab)
             }
         },
         topBar = {
             AnimatedVisibility(
-                visible = showFAB,
-                enter = slideInVertically(
-                    animationSpec = tween(300),
-                    initialOffsetY = { -it }
-                ),
-                exit = slideOutVertically(
-                    animationSpec = tween(300),
-                    targetOffsetY = { -it }
-                )
-            ) {
+                visible = showFAB, enter = slideInVertically(
+                animationSpec = tween(300), initialOffsetY = { -it }), exit = slideOutVertically(
+                animationSpec = tween(300), targetOffsetY = { -it })) {
                 Box(
                     modifier = Modifier
                         .background(MaterialTheme.colorScheme.background)
                         .padding(WindowInsets.statusBars.asPaddingValues())
-                        .padding( 16.dp)
+                        .padding(16.dp)
                 ) {
                     CustomSearchBar()
                 }
@@ -79,14 +62,13 @@ fun MainScreen(
             ) {
                 CustomFAB()
             }
-        }
-    ) { innerPadding ->
+        }) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
                     bottom = if (showBottomBar) innerPadding.calculateBottomPadding() else 0.dp,
-                    top = innerPadding.calculateTopPadding()
+                    top = if (showFAB) innerPadding.calculateTopPadding() else 0.dp
                 )
         ) {
             content()
@@ -94,18 +76,3 @@ fun MainScreen(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-private fun MainPreview() {
-    val navController = rememberNavController()
-    ScanifyTheme {
-        MainScreen(
-            navController = navController,
-            selectedTab = "Files",
-            showBottomBar = true,
-            showFAB = true
-        ){
-            FileScreen(navController)
-        }
-    }
-}

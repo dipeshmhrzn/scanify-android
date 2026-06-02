@@ -55,6 +55,7 @@ fun SettingScreen(
 
         // APPEARANCE SECTION
         item {
+            Spacer(modifier = Modifier.height(16.dp))
             SectionTitle("APPEARANCE")
             SettingsCard {
                 SettingsRow(
@@ -120,7 +121,7 @@ fun SettingScreen(
                     icon = Icons.Rounded.BugReport,
                     iconBgColor = Color(0xFFF44336),
                     title = "Report a Bug",
-                    subtitle = "Help us improve DoX",
+                    subtitle = "Help us improve Scanify",
                     showDivider = true,
                     onClick = { },
                     trailingContent = {
