@@ -1,8 +1,5 @@
 package com.scanify.app.presentation.file
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,11 +22,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.scanify.app.presentation.components.LoadingIndicator
 import com.scanify.app.presentation.components.filecomponents.preview.DocumentPageList
+import com.scanify.app.presentation.util.rememberDocumentScanner
 import com.scanify.app.presentation.viewmodels.PreviewUiState
 import com.scanify.app.presentation.viewmodels.PreviewViewModel
 
@@ -43,12 +41,8 @@ fun PreviewScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia()
-    ) { uris ->
-        if (uris.isNotEmpty()) {
-            viewModel.appendScannedImages(uris.map { it.toString() })
-        }
+    val launchScanner = rememberDocumentScanner { imageUris, pdfUri ->
+        viewModel.appendScannedImages(imageUris)
     }
 
     Scaffold(
@@ -105,11 +99,7 @@ fun PreviewScreen(
                         document = state.document,
                         pageCount = state.pageCount,
                         lastModified = state.lastModified,
-                        onAppendPagesRequested = {
-                            imagePickerLauncher.launch(
-                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                            )
-                        }
+                        onAppendPagesRequested = launchScanner
                     )
 
                     if (state.isUpdating) {

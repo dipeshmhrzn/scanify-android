@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -126,10 +127,13 @@ fun DocumentPageList(
                     }
                 }
 
+                var itemAspectRatio by remember(index) { mutableFloatStateOf(0.707f) }
+
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(0.707f) // 1. MOVED HERE: Lock the Card's height permanently
+                        .wrapContentHeight()
+                        .aspectRatio(itemAspectRatio)
                         .shadow(
                             elevation = 2.dp,
                             shape = RoundedCornerShape(4.dp),
@@ -144,8 +148,15 @@ fun DocumentPageList(
                         model = imageModel,
                         contentDescription = "Document Sheet ${index + 1}",
                         modifier = Modifier
-                            .fillMaxWidth(),
-                        contentScale = ContentScale.FillWidth
+                            .fillMaxWidth()
+                            .wrapContentHeight(),
+                        contentScale = ContentScale.FillWidth,
+                        onSuccess = { state ->
+                            val size = state.painter.intrinsicSize
+                            if (size.width > 0 && size.height > 0) {
+                                itemAspectRatio = size.width / size.height
+                            }
+                        }
                     )
                 }
             }
