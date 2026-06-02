@@ -1,5 +1,6 @@
 package com.scanify.app.presentation.file
 
+import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -26,9 +27,14 @@ import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.UploadFile
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,20 +49,26 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.scanify.app.domain.model.Document
 import com.scanify.app.navigation.Routes
+import com.scanify.app.presentation.DeleteDocumentDialog
 import com.scanify.app.presentation.components.LoadingIndicator
 import com.scanify.app.presentation.components.NoFilesScreen
+import com.scanify.app.presentation.components.RenameDocumentDialog
 import com.scanify.app.presentation.components.filecomponents.cards.GridFileCard
 import com.scanify.app.presentation.components.filecomponents.cards.ListFileCard
+import com.scanify.app.presentation.components.moreoptioncomponents.MoreOptionsBottomSheet
 import com.scanify.app.presentation.file.components.QuickImportActionCard
 import com.scanify.app.presentation.util.OfficeFileOpener
 import com.scanify.app.presentation.util.rememberDocumentScanner
 import com.scanify.app.presentation.viewmodels.FileNavigationEvent
 import com.scanify.app.presentation.viewmodels.FileUiState
 import com.scanify.app.presentation.viewmodels.FileViewModel
+import java.io.File
 
 @Composable
 fun FileScreen(
@@ -70,6 +82,18 @@ fun FileScreen(
     var selectedCategory by remember { mutableStateOf("All") }
     var isGridView by remember { mutableStateOf(true) }
     val fileCategories = remember { listOf("All", "PDF", "DOCX", "PPTX", "XLSX") }
+
+    var selectedDocForOptions by remember { mutableStateOf<Document?>(null) }
+    var docToRename by remember { mutableStateOf<Document?>(null) }
+    var docToDelete by remember { mutableStateOf<Document?>(null) }
+    var renameInputText by remember { mutableStateOf("") }
+
+    val onCardClick = remember(viewModel) {
+        { doc: Document -> viewModel.onDocumentClick(doc) }
+    }
+    val onMoreOptionsClick = remember {
+        { doc: Document -> selectedDocForOptions = doc }
+    }
 
     val filteredDocs = remember(uiState, selectedCategory) {
         val state = uiState
@@ -98,6 +122,27 @@ fun FileScreen(
 
                 is FileNavigationEvent.ShowError -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                }
+
+                is FileNavigationEvent.ShareFile -> {
+                    try {
+                        val file = File(event.filePath)
+                        val fileUri = FileProvider.getUriForFile(
+                            context,
+                            "${context.packageName}.fileprovider",
+                            file
+                        )
+                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                            type =
+                                if (event.fileType.lowercase() == "pdf") "application/pdf" else "image/*"
+                            putExtra(Intent.EXTRA_STREAM, fileUri)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        context.startActivity(Intent.createChooser(shareIntent, "Share Document"))
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "Error: ${e.localizedMessage}", Toast.LENGTH_SHORT)
+                            .show()
+                    }
                 }
             }
         }
@@ -292,11 +337,10 @@ fun FileScreen(
                                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
                                     rowDocs.forEach { doc ->
-                                        val onCardClick = remember(doc.id) { { viewModel.onDocumentClick(doc) } }
                                         GridFileCard(
                                             document = doc,
                                             onClick = onCardClick,
-                                            onOptionsClick = {},
+                                            onMoreOptionsClick = onMoreOptionsClick,
                                             modifier = Modifier.weight(1f)
                                         )
                                     }
@@ -307,9 +351,10 @@ fun FileScreen(
                             }
                         } else {
                             items(filteredDocs, key = { it.id }) { doc ->
-                                val onCardClick = remember(doc.id) { { viewModel.onDocumentClick(doc) } }
                                 ListFileCard(
-                                    document = doc, onClick = onCardClick
+                                    document = doc,
+                                    onClick = onCardClick,
+                                    onMoreOptionsClick = onMoreOptionsClick
                                 )
                             }
                         }
@@ -335,6 +380,47 @@ fun FileScreen(
                     LoadingIndicator()
                 }
             }
+        }
+
+        selectedDocForOptions?.let { document ->
+            MoreOptionsBottomSheet(
+                isVisible = true,
+                onDismiss = { selectedDocForOptions = null },
+                onRenameClick = {
+                    renameInputText = document.name
+                    docToRename = document
+                    selectedDocForOptions = null
+                },
+                onShareClick = {
+                    viewModel.shareDocument(document)
+                    selectedDocForOptions = null
+                },
+                onDeleteClick = {
+                    docToDelete = document
+                    selectedDocForOptions = null
+                }
+            )
+        }
+
+        docToRename?.let { document ->
+            RenameDocumentDialog(
+                initialName = document.name,
+                onDismiss = { docToRename = null },
+                onConfirm = { newName ->
+                    viewModel.renameDocument(document, newName)
+                    docToRename = null
+                }
+            )
+        }
+
+        docToDelete?.let { document ->
+            DeleteDocumentDialog(
+                onDismiss = { docToDelete = null },
+                onConfirm = {
+                    viewModel.deleteDocument(document)
+                    docToDelete = null
+                }
+            )
         }
     }
 }

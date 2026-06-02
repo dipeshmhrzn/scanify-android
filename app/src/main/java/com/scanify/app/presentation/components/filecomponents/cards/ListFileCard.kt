@@ -32,12 +32,14 @@ import com.scanify.app.presentation.components.filecomponents.preview.DocumentTh
 
 @Composable
 fun ListFileCard(
-    document: Document, onClick: () -> Unit, modifier: Modifier = Modifier
+    document: Document,
+    onClick: (Document) -> Unit,
+    onMoreOptionsClick: (Document) -> Unit,
+    modifier: Modifier = Modifier
 ) {
 
     val cardShape = remember { RoundedCornerShape(16.dp) }
     val thumbShape = remember { RoundedCornerShape(12.dp) }
-    val optionBgShape = remember { RoundedCornerShape(8.dp) }
 
     val formattedDate = remember(document.createdAt) { formatDateString(document.createdAt) }
 
@@ -55,13 +57,15 @@ fun ListFileCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onClick() }
+                .clickable { onClick(document) }
                 .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             DocumentThumbnail(
                 document = document,
-                modifier = Modifier.size(64.dp).clip(thumbShape)
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(thumbShape)
             )
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -97,8 +101,9 @@ fun ListFileCard(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .clickable(onClick = { /* Handle options drop menu actions here */ })
-                    .padding(8.dp), contentAlignment = Alignment.Center
+                    .clickable(onClick = { onMoreOptionsClick(document) })
+                    .padding(8.dp),
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.MoreVert,

@@ -38,8 +38,8 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun GridFileCard(
     document: Document,
-    onClick: () -> Unit,
-    onOptionsClick: () -> Unit,
+    onClick: (Document) -> Unit,
+    onMoreOptionsClick: (Document) -> Unit,
     modifier: Modifier = Modifier
 ) {
 
@@ -63,7 +63,7 @@ fun GridFileCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
+                .clickable(onClick = { onClick(document) })
         ) {
             Box(
                 modifier = Modifier
@@ -90,9 +90,8 @@ fun GridFileCard(
                         .align(Alignment.TopEnd)
                         .padding(12.dp)
                         .size(24.dp)
-                        .clickable {
-                            onOptionsClick()
-                        })
+                        .clickable(onClick = { onMoreOptionsClick(document) })
+                )
             }
 
             Column(
