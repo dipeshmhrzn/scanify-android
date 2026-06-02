@@ -12,8 +12,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.scanify.app.presentation.components.MainScreen
 import com.scanify.app.presentation.file.FileScreen
+import com.scanify.app.presentation.file.PreviewScreen
 import com.scanify.app.presentation.home.HomeScreen
 import com.scanify.app.presentation.setting.SettingScreen
 import com.scanify.app.presentation.template.TemplateScreen
@@ -102,6 +104,17 @@ fun Navigation(modifier: Modifier = Modifier) {
                 enterTransition = { fadeIn(tween(200)) },
                 exitTransition = { fadeOut(tween(200)) }) {
                 SettingScreen(navController)
+            }
+
+            composable<Routes.PreviewScreen>(
+                enterTransition = { fadeIn(tween(200)) },
+                exitTransition = { fadeOut(tween(200)) }
+            ) { backStackEntry ->
+                val previewRoute: Routes.PreviewScreen = backStackEntry.toRoute()
+                PreviewScreen(
+                    documentId = previewRoute.id,
+                    navController = navController
+                )
             }
 
         }

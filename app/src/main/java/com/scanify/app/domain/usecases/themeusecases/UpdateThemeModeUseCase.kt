@@ -1,4 +1,4 @@
-package com.scanify.app.domain.usecases
+package com.scanify.app.domain.usecases.themeusecases
 
 import com.scanify.app.domain.repository.ThemePreferenceRepository
 import com.scanify.app.ui.theme.ThemeMode

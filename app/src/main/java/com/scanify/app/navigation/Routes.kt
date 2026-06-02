@@ -16,5 +16,8 @@ sealed class Routes {
     @Serializable
     data object SettingScreen: Routes()
 
+    @Serializable
+    data class PreviewScreen(val id: Long)
+
 
 }
