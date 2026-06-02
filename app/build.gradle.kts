@@ -18,7 +18,7 @@ android {
 
     defaultConfig {
         applicationId = "com.scanify.app"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -78,5 +78,9 @@ dependencies {
 
     implementation(libs.androidx.datastore.preferences)
 
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
+
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
 }
