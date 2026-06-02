@@ -12,4 +12,6 @@ interface DocumentRepository {
     suspend fun importDocument(document: Document): Long
 
     suspend fun deleteDocument(document: Document)
+
+    suspend fun renameDocument(document: Document, newName: String): Result<Unit>
 }

@@ -7,6 +7,7 @@ import com.scanify.app.domain.usecases.importdocumentusecase.AppendImagesToDocum
 import com.scanify.app.domain.usecases.importdocumentusecase.ImportDocumentUseCase
 import com.scanify.app.domain.usecases.importdocumentusecase.ImportMultipleFilesUseCase
 import com.scanify.app.domain.usecases.importdocumentusecase.ImportMultipleImagesUseCase
+import com.scanify.app.domain.usecases.renamedocumentusecases.RenameDocumentUseCase
 import jakarta.inject.Inject
 
 data class DocumentUseCases @Inject constructor(
@@ -16,5 +17,6 @@ data class DocumentUseCases @Inject constructor(
     val deleteDocument: DeleteDocumentUseCase,
     val importMultipleFiles: ImportMultipleFilesUseCase,
     val importMultipleImages: ImportMultipleImagesUseCase,
-    val appendImagesToDocument: AppendImagesToDocumentUseCase
+    val appendImagesToDocument: AppendImagesToDocumentUseCase,
+    val renameDocumentUseCase: RenameDocumentUseCase
 )
