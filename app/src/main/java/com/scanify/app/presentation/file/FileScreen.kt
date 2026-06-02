@@ -53,6 +53,7 @@ import com.scanify.app.presentation.components.filecomponents.cards.GridFileCard
 import com.scanify.app.presentation.components.filecomponents.cards.ListFileCard
 import com.scanify.app.presentation.file.components.QuickImportActionCard
 import com.scanify.app.presentation.util.OfficeFileOpener
+import com.scanify.app.presentation.util.rememberDocumentScanner
 import com.scanify.app.presentation.viewmodels.FileNavigationEvent
 import com.scanify.app.presentation.viewmodels.FileUiState
 import com.scanify.app.presentation.viewmodels.FileViewModel
@@ -96,6 +97,10 @@ fun FileScreen(
                 }
             }
         }
+    }
+
+    val launchScanner = rememberDocumentScanner { imageUris, pdfUri ->
+        viewModel.handleScannedDocuments(imageUris, pdfUri)
     }
 
     val documentPickerLauncher = rememberLauncherForActivityResult(
@@ -180,7 +185,12 @@ fun FileScreen(
                             modifier = Modifier
                                 .fillMaxWidth(),
                             contentAlignment = Alignment.Center
-                        ) { NoFilesScreen("Recent") }
+                        ) {
+                            NoFilesScreen(
+                                text = "Recent",
+                                onScanNowClick = launchScanner
+                            )
+                        }
                     }
                 }
 
@@ -261,8 +271,9 @@ fun FileScreen(
                                     .fillMaxWidth(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                val emptyText = if (selectedCategory == "All") "Recent" else selectedCategory
-                                NoFilesScreen(emptyText)
+                                val emptyText =
+                                    if (selectedCategory == "All") "Any" else selectedCategory
+                                NoFilesScreen(text = emptyText)
                             }
 
                         }

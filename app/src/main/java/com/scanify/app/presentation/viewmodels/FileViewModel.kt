@@ -114,6 +114,45 @@ class FileViewModel @Inject constructor(
         }
     }
 
+    fun handleScannedDocuments(imageUris: List<String>, pdfUri: String?) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val startTime = System.currentTimeMillis()
+            _isImporting.value = true
+
+            try {
+                if (imageUris.isNotEmpty()) {
+                    documentUseCases.importMultipleImages(imageUris)
+                        .onSuccess { generatedId ->
+                            _navigationEvent.send(FileNavigationEvent.NavigateToPreview(generatedId))
+                        }
+                        .onFailure { err ->
+                            _navigationEvent.send(
+                                FileNavigationEvent.ShowError(
+                                    err.localizedMessage ?: "Failed compiling scanned images."
+                                )
+                            )
+                        }
+                } else if (pdfUri != null) {
+                    documentUseCases.importMultipleFiles(listOf(pdfUri))
+                        .onFailure { err ->
+                            _navigationEvent.send(
+                                FileNavigationEvent.ShowError(
+                                    err.localizedMessage ?: "Failed importing scanned PDF."
+                                )
+                            )
+                        }
+                }
+            } catch (e: Exception) {
+                _navigationEvent.send(
+                    FileNavigationEvent.ShowError(e.localizedMessage ?: "Unknown scan error")
+                )
+            } finally {
+                enforceMinimumDelay(startTime)
+                _isImporting.value = false
+            }
+        }
+    }
+
     private suspend fun routeDocument(document: Document) {
         when (document.fileType.uppercase()) {
             "PDF", "JPG", "JPEG", "PNG" -> {

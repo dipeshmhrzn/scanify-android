@@ -18,7 +18,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.scanify.app.presentation.util.rememberDocumentScanner
+import com.scanify.app.presentation.viewmodels.FileViewModel
 
 @Composable
 fun MainScreen(
@@ -26,8 +29,14 @@ fun MainScreen(
     selectedTab: String,
     showBottomBar: Boolean,
     showFAB: Boolean,
+    viewModel: FileViewModel = hiltViewModel(),
     content: @Composable () -> Unit
 ) {
+
+    val launchScanner = rememberDocumentScanner { imageUris, pdfUri ->
+        viewModel.handleScannedDocuments(imageUris, pdfUri)
+    }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -60,7 +69,7 @@ fun MainScreen(
                 enter = scaleIn(animationSpec = tween(300)),
                 exit = scaleOut(animationSpec = tween(300))
             ) {
-                CustomFAB()
+                CustomFAB(launchScanner)
             }
         }) { innerPadding ->
         Box(

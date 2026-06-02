@@ -81,6 +81,8 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
 
-    implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation(libs.androidx.core.splashscreen)
+
+    implementation(libs.play.services.mlkit.document.scanner)
 
 }

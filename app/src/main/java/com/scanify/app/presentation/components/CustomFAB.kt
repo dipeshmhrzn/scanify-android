@@ -19,7 +19,9 @@ import androidx.compose.ui.unit.dp
 import com.scanify.app.ui.theme.BrandGradient
 
 @Composable
-fun CustomFAB() {
+fun CustomFAB(
+    onClick: () -> Unit
+) {
 
     Box(
         contentAlignment = Alignment.Center,
@@ -28,7 +30,7 @@ fun CustomFAB() {
             .shadow(elevation = 6.dp, shape = RoundedCornerShape(16.dp))
             .clip(shape = RoundedCornerShape(16.dp))
             .background(Brush.linearGradient(BrandGradient))
-            .clickable {}
+            .clickable { onClick() }
     ) {
         Icon(
             imageVector = Icons.Default.DocumentScanner,

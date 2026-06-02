@@ -21,11 +21,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun NoFilesScreen(text: String) {
+fun NoFilesScreen(
+    text: String,
+    onScanNowClick: (() -> Unit)? = null
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -61,26 +63,26 @@ fun NoFilesScreen(text: String) {
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        if (onScanNowClick != null) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Box(
+                modifier = Modifier
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outline,
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .clip(shape = RoundedCornerShape(16.dp))
+                    .clickable { onScanNowClick() }
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
 
-        Box(
-            modifier = Modifier
-                .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outline,
-                    shape = RoundedCornerShape(16.dp)
+            ) {
+                Text(
+                    text = "Scan now",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.primary
                 )
-                .clip(shape = RoundedCornerShape(16.dp))
-                .clickable {}
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-
-        ) {
-            Text(
-                text = "Scan now",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
+            }
         }
-
     }
 }

@@ -21,7 +21,6 @@ import androidx.compose.material.icons.automirrored.rounded.BrandingWatermark
 import androidx.compose.material.icons.rounded.Compress
 import androidx.compose.material.icons.rounded.Draw
 import androidx.compose.material.icons.rounded.FolderZip
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,11 +39,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.scanify.app.navigation.Routes
 import com.scanify.app.presentation.components.LoadingIndicator
-import com.scanify.app.presentation.components.filecomponents.cards.ListFileCard
 import com.scanify.app.presentation.components.NoFilesScreen
+import com.scanify.app.presentation.components.filecomponents.cards.ListFileCard
 import com.scanify.app.presentation.home.components.PdfTool
 import com.scanify.app.presentation.home.components.PdfToolCard
 import com.scanify.app.presentation.util.OfficeFileOpener
+import com.scanify.app.presentation.util.rememberDocumentScanner
 import com.scanify.app.presentation.viewmodels.FileNavigationEvent
 import com.scanify.app.presentation.viewmodels.FileUiState
 import com.scanify.app.presentation.viewmodels.FileViewModel
@@ -63,6 +63,10 @@ fun HomeScreen(
 
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    val launchScanner = rememberDocumentScanner { imageUris, pdfUri ->
+        viewModel.handleScannedDocuments(imageUris, pdfUri)
+    }
 
     LaunchedEffect(Unit) {
         viewModel.navigationEvent.collect { event ->
@@ -122,7 +126,7 @@ fun HomeScreen(
                         modifier = Modifier
                             .fillMaxWidth(),
                         contentAlignment = Alignment.Center
-                    ) { NoFilesScreen("Recent") }
+                    ) { NoFilesScreen("Recent", onScanNowClick = launchScanner) }
                 }
             }
 
