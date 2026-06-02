@@ -14,6 +14,9 @@ interface DocumentDao {
     @Query("SELECT * FROM documents ORDER BY createdAtTimeStamp DESC")
     fun getAllDocuments(): Flow<List<DocumentEntity>>
 
+    @Query("UPDATE documents SET name = :newName WHERE id = :id")
+    suspend fun updateDocumentName(id: Long, newName: String)
+
     @Query("SELECT * FROM documents WHERE id = :id LIMIT 1")
     suspend fun getDocumentById(id: Long): DocumentEntity?
 
