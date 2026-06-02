@@ -103,17 +103,33 @@ class FileViewModel @Inject constructor(
     }
 
     fun renameDocument(document: Document, newName: String) {
-        if (newName.isBlank() || newName == document.name) return
+        val trimmedName = newName.trim()
+        if (trimmedName.isEmpty() || trimmedName.equals(document.name, ignoreCase = true)) return
+
+        var finalizedName = trimmedName
+
+        val currentState = uiState.value
+        if (currentState is FileUiState.Success) {
+            val existingNames = currentState.documents
+                .filter { it.id != document.id }
+                .map { it.name.lowercase() }
+                .toSet()
+
+            if (existingNames.contains(finalizedName.lowercase())) {
+                var counter = 1
+                val baseName = finalizedName.substringBeforeLast(".")
+                val extension = finalizedName.substringAfterLast(".", "")
+                val dotSuffix = if (extension.isNotEmpty()) ".$extension" else ""
+
+                do {
+                    finalizedName = "$baseName ($counter)$dotSuffix"
+                    counter++
+                } while (existingNames.contains(finalizedName.lowercase()))
+            }
+        }
 
         viewModelScope.launch {
-            documentUseCases.renameDocumentUseCase(document, newName)
-                .onFailure { err ->
-                    _navigationEvent.send(
-                        FileNavigationEvent.ShowError(
-                            err.localizedMessage ?: "Failed to rename file."
-                        )
-                    )
-                }
+            documentUseCases.renameDocumentUseCase(document, finalizedName)
         }
     }
 
