@@ -5,8 +5,12 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
+import com.scanify.app.data.repositoryimpl.FileManagerImpl
 import com.scanify.app.data.repositoryimpl.ThemePreferenceRepositoryImpl
+import com.scanify.app.data.repositoryimpl.UriResolverImpl
+import com.scanify.app.domain.repository.FileManager
 import com.scanify.app.domain.repository.ThemePreferenceRepository
+import com.scanify.app.domain.repository.UriResolver
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -26,13 +30,15 @@ object AppModule {
             context.preferencesDataStoreFile("scanify_preferences")
         })
     }
-}
 
-@Module
-@InstallIn(SingletonComponent::class)
-abstract class RepositoryModule{
-    @Binds
-    abstract fun bindThemePreferenceRepository(
-        themePreferenceRepositoryImpl: ThemePreferenceRepositoryImpl
-    ): ThemePreferenceRepository
+    @Provides
+    @Singleton
+    fun provideFileManager(@ApplicationContext context: Context): FileManager =
+        FileManagerImpl(context)
+
+    @Provides
+    @Singleton
+    fun provideUriResolver(@ApplicationContext context: Context): UriResolver =
+        UriResolverImpl(context)
+
 }
