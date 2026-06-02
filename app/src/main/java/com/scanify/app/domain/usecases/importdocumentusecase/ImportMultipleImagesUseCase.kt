@@ -30,7 +30,7 @@ class ImportMultipleImagesUseCase @Inject constructor(
             }
 
             val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
-            val baseName = "SCAN_${LocalDateTime.now().format(formatter)}"
+            val baseName = "SCANIFY_${LocalDateTime.now().format(formatter)}"
             val tempPdfFile = File(context.cacheDir, "$baseName.pdf")
             val pdfDocument = PdfDocument()
 
