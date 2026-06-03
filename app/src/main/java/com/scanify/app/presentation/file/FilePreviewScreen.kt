@@ -18,10 +18,16 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -41,9 +47,13 @@ fun PreviewScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    val launchScanner = rememberDocumentScanner { imageUris, pdfUri ->
-        viewModel.appendScannedImages(imageUris)
-    }
+
+    val launchScanner = rememberDocumentScanner(
+        onLoading = {},
+        onSuccess = { imageUris, pdfUri ->
+            viewModel.appendScannedImages(imageUris)
+        }
+    )
 
     Scaffold(
         topBar = {
@@ -57,7 +67,7 @@ fun PreviewScreen(
                         text = screenTitle,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.titleLarge
                     )
                 },
                 navigationIcon = {

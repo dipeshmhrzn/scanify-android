@@ -36,6 +36,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -94,9 +96,14 @@ fun HomeScreen(
         }
     }
 
-    val launchScanner = rememberDocumentScanner { imageUris, pdfUri ->
-        viewModel.handleScannedDocuments(imageUris, pdfUri)
-    }
+    var isOptimizing by remember { mutableStateOf(false) }
+
+    val launchScanner = rememberDocumentScanner(
+        onLoading = { loading -> isOptimizing = loading },
+        onSuccess = { imageUris, pdfUri ->
+            viewModel.handleScannedDocuments(imageUris, pdfUri)
+        }
+    )
 
     LaunchedEffect(Unit) {
         viewModel.navigationEvent.collect { event ->
@@ -237,6 +244,26 @@ fun HomeScreen(
                     selectedDocForOptions = null
                 }
             )
+        }
+
+        if (isOptimizing) {
+            Dialog(
+                onDismissRequest = {},
+                properties = DialogProperties(
+                    dismissOnBackPress = false,
+                    dismissOnClickOutside = false,
+                    usePlatformDefaultWidth = false
+                )
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0xFF131324).copy(alpha = 0.85f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    LoadingIndicator()
+                }
+            }
         }
 
         docToRename?.let { document ->

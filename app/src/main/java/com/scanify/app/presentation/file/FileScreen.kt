@@ -143,9 +143,14 @@ fun FileScreen(
         }
     }
 
-    val launchScanner = rememberDocumentScanner { imageUris, pdfUri ->
-        viewModel.handleScannedDocuments(imageUris, pdfUri)
-    }
+    var isOptimizing by remember { mutableStateOf(false) }
+
+    val launchScanner = rememberDocumentScanner(
+        onLoading = { loading -> isOptimizing = loading },
+        onSuccess = { imageUris, pdfUri ->
+            viewModel.handleScannedDocuments(imageUris, pdfUri)
+        }
+    )
 
     val documentPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenMultipleDocuments()
@@ -357,7 +362,7 @@ fun FileScreen(
                 }
             }
         }
-        if (isImporting) {
+        if (isImporting || isOptimizing) {
             Dialog(
                 onDismissRequest = {},
                 properties = DialogProperties(
@@ -376,6 +381,8 @@ fun FileScreen(
                 }
             }
         }
+
+
 
         selectedDocForOptions?.let { document ->
             MoreOptionsBottomSheet(

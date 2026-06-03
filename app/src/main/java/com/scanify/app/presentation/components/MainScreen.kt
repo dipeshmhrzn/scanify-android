@@ -16,8 +16,16 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.scanify.app.presentation.util.rememberDocumentScanner
@@ -33,9 +41,14 @@ fun MainScreen(
     content: @Composable () -> Unit
 ) {
 
-    val launchScanner = rememberDocumentScanner { imageUris, pdfUri ->
-        viewModel.handleScannedDocuments(imageUris, pdfUri)
-    }
+    var isOptimizing by remember { mutableStateOf(false) }
+
+    val launchScanner = rememberDocumentScanner(
+        onLoading = { loading -> isOptimizing = loading },
+        onSuccess = { imageUris, pdfUri ->
+            viewModel.handleScannedDocuments(imageUris, pdfUri)
+        }
+    )
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -43,16 +56,20 @@ fun MainScreen(
         bottomBar = {
             AnimatedVisibility(
                 visible = showBottomBar, enter = slideInVertically(
-                animationSpec = tween(300), initialOffsetY = { it }), exit = slideOutVertically(
-                animationSpec = tween(300), targetOffsetY = { it })) {
+                    animationSpec = tween(300), initialOffsetY = { it }), exit = slideOutVertically(
+                    animationSpec = tween(300), targetOffsetY = { it })
+            ) {
                 NavBar(navController, selectedTab)
             }
         },
         topBar = {
             AnimatedVisibility(
-                visible = showFAB, enter = slideInVertically(
-                animationSpec = tween(300), initialOffsetY = { -it }), exit = slideOutVertically(
-                animationSpec = tween(300), targetOffsetY = { -it })) {
+                visible = showFAB,
+                enter = slideInVertically(
+                    animationSpec = tween(300), initialOffsetY = { -it }),
+                exit = slideOutVertically(
+                    animationSpec = tween(300), targetOffsetY = { -it })
+            ) {
                 Box(
                     modifier = Modifier
                         .background(MaterialTheme.colorScheme.background)
@@ -81,6 +98,25 @@ fun MainScreen(
                 )
         ) {
             content()
+        }
+        if (isOptimizing) {
+            Dialog(
+                onDismissRequest = {},
+                properties = DialogProperties(
+                    dismissOnBackPress = false,
+                    dismissOnClickOutside = false,
+                    usePlatformDefaultWidth = false
+                )
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0xFF131324).copy(alpha = 0.85f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    LoadingIndicator()
+                }
+            }
         }
     }
 }
