@@ -16,6 +16,7 @@ import java.io.IOException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
+import androidx.core.graphics.scale
 
 class ImportMultipleImagesUseCase @Inject constructor(
     private val uriResolver: UriResolver,
@@ -34,6 +35,8 @@ class ImportMultipleImagesUseCase @Inject constructor(
             val tempPdfFile = File(context.cacheDir, "$baseName.pdf")
             val pdfDocument = PdfDocument()
 
+            val maxPageDim = 1200
+
             uriStrings.forEachIndexed { index: Int, uriString: String ->
                 val resolvedData = uriResolver.resolveUri(uriString) ?: return@forEachIndexed
                 val (_, fileBytes: ByteArray) = resolvedData
@@ -41,11 +44,27 @@ class ImportMultipleImagesUseCase @Inject constructor(
                 val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
                 BitmapFactory.decodeByteArray(fileBytes, 0, fileBytes.size, options)
 
-                options.inSampleSize = calculateInSampleSize(options, 1440, 1440)
+                options.inSampleSize = calculateInSampleSize(options, maxPageDim, maxPageDim)
                 options.inJustDecodeBounds = false
+                options.inPreferredConfig = Bitmap.Config.RGB_565
 
-                val bitmap: Bitmap = BitmapFactory.decodeByteArray(fileBytes, 0, fileBytes.size, options)
+                var bitmap: Bitmap = BitmapFactory.decodeByteArray(fileBytes, 0, fileBytes.size, options)
                     ?: return@forEachIndexed
+
+
+                if (bitmap.width > maxPageDim || bitmap.height > maxPageDim) {
+                    val ratio = bitmap.width.toFloat() / bitmap.height.toFloat()
+                    val (targetW, targetH) = if (ratio > 1) {
+                        maxPageDim to (maxPageDim / ratio).toInt()
+                    } else {
+                        (maxPageDim * ratio).toInt() to maxPageDim
+                    }
+                    val scaledBitmap = bitmap.scale(targetW, targetH)
+                    if (scaledBitmap != bitmap) {
+                        bitmap.recycle()
+                        bitmap = scaledBitmap
+                    }
+                }
 
                 val pageInfo: PdfDocument.PageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, index + 1).create()
                 val page: PdfDocument.Page = pdfDocument.startPage(pageInfo)
