@@ -36,4 +36,5 @@ class DocumentRepositoryImpl @Inject constructor(
                 dao.updateDocumentName(document.id, newName)
             }
         }
+
 }

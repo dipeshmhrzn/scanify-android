@@ -63,6 +63,7 @@ import com.scanify.app.presentation.util.rememberDocumentScanner
 import com.scanify.app.presentation.viewmodels.FileNavigationEvent
 import com.scanify.app.presentation.viewmodels.FileUiState
 import com.scanify.app.presentation.viewmodels.FileViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 
@@ -133,7 +134,7 @@ fun FileScreen(
                                 File(context.cacheDir, "shared_documents").apply { mkdirs() }
                             val cacheFile = File(cacheDir, finalizedShareName)
 
-                            withContext(kotlinx.coroutines.Dispatchers.IO) {
+                            withContext(Dispatchers.IO) {
                                 cacheDir.listFiles()?.forEach { it.delete() }
                                 originalFile.copyTo(cacheFile, overwrite = true)
                             }

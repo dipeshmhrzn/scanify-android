@@ -16,11 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.BrandingWatermark
-import androidx.compose.material.icons.rounded.Compress
-import androidx.compose.material.icons.rounded.Draw
-import androidx.compose.material.icons.rounded.FolderZip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -50,8 +45,6 @@ import com.scanify.app.presentation.components.NoFilesScreen
 import com.scanify.app.presentation.components.RenameDocumentDialog
 import com.scanify.app.presentation.components.filecomponents.cards.ListFileCard
 import com.scanify.app.presentation.components.moreoptioncomponents.MoreOptionsBottomSheet
-import com.scanify.app.presentation.home.components.PdfTool
-import com.scanify.app.presentation.home.components.PdfToolCard
 import com.scanify.app.presentation.util.OfficeFileOpener
 import com.scanify.app.presentation.util.rememberDocumentScanner
 import com.scanify.app.presentation.viewmodels.FileNavigationEvent
@@ -59,13 +52,6 @@ import com.scanify.app.presentation.viewmodels.FileUiState
 import com.scanify.app.presentation.viewmodels.FileViewModel
 import kotlinx.coroutines.withContext
 import java.io.File
-
-private val StaticPdfTools = listOf(
-    PdfTool("Signature", Icons.Rounded.Draw, Color(0xFF2196F3)),
-    PdfTool("Watermark", Icons.AutoMirrored.Rounded.BrandingWatermark, Color(0xFF9C27B0)),
-    PdfTool("Compress PDF", Icons.Rounded.Compress, Color(0xFF4CAF50)),
-    PdfTool("Merge Files", Icons.Rounded.FolderZip, Color(0xFFFF9800))
-)
 
 @Composable
 fun HomeScreen(
@@ -79,7 +65,6 @@ fun HomeScreen(
     var selectedDocForOptions by remember { mutableStateOf<Document?>(null) }
     var docToRename by remember { mutableStateOf<Document?>(null) }
     var docToDelete by remember { mutableStateOf<Document?>(null) }
-    var renameInputText by remember { mutableStateOf("") }
 
     val onCardClick = remember(viewModel) {
         { doc: Document -> viewModel.onDocumentClick(doc) }
@@ -181,17 +166,6 @@ fun HomeScreen(
             contentPadding = PaddingValues(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    StaticPdfTools.forEach { tool ->
-                        PdfToolCard(tool, modifier = Modifier.weight(1f))
-                    }
-                }
-            }
             when (val state = uiState) {
                 is FileUiState.Loading -> {
                     item {
@@ -267,7 +241,6 @@ fun HomeScreen(
                 isVisible = true,
                 onDismiss = { selectedDocForOptions = null },
                 onRenameClick = {
-                    renameInputText = document.name
                     docToRename = document
                     selectedDocForOptions = null
                 },
