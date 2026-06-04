@@ -63,6 +63,7 @@ import com.scanify.app.presentation.util.rememberDocumentScanner
 import com.scanify.app.presentation.viewmodels.FileNavigationEvent
 import com.scanify.app.presentation.viewmodels.FileUiState
 import com.scanify.app.presentation.viewmodels.FileViewModel
+import kotlinx.coroutines.withContext
 import java.io.File
 
 @Composable
@@ -121,19 +122,48 @@ fun FileScreen(
 
                 is FileNavigationEvent.ShareFile -> {
                     try {
-                        val file = File(event.filePath)
-                        val fileUri = FileProvider.getUriForFile(
-                            context,
-                            "${context.packageName}.fileprovider",
-                            file
-                        )
-                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                            type =
-                                if (event.fileType.lowercase() == "pdf") "application/pdf" else "image/*"
-                            putExtra(Intent.EXTRA_STREAM, fileUri)
-                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        val originalFile = File(event.filePath)
+                        if (originalFile.exists()) {
+                            val extension = originalFile.extension
+                            val cleanDisplayName = event.displayName.substringBeforeLast(".")
+                            val finalizedShareName =
+                                if (extension.isNotEmpty()) "$cleanDisplayName.$extension" else cleanDisplayName
+
+                            val cacheDir =
+                                File(context.cacheDir, "shared_documents").apply { mkdirs() }
+                            val cacheFile = File(cacheDir, finalizedShareName)
+
+                            withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                cacheDir.listFiles()?.forEach { it.delete() }
+                                originalFile.copyTo(cacheFile, overwrite = true)
+                            }
+
+                            val fileUri = FileProvider.getUriForFile(
+                                context,
+                                "${context.packageName}.fileprovider",
+                                cacheFile
+                            )
+
+                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                type =
+                                    if (event.fileType.lowercase() == "pdf") "application/pdf" else "image/*"
+                                putExtra(Intent.EXTRA_STREAM, fileUri)
+                                putExtra(Intent.EXTRA_TITLE, finalizedShareName)
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            }
+                            context.startActivity(
+                                Intent.createChooser(
+                                    shareIntent,
+                                    "Share Document"
+                                )
+                            )
+                        } else {
+                            Toast.makeText(
+                                context,
+                                "Error: Physical file not found.",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
-                        context.startActivity(Intent.createChooser(shareIntent, "Share Document"))
                     } catch (e: Exception) {
                         Toast.makeText(context, "Error: ${e.localizedMessage}", Toast.LENGTH_SHORT)
                             .show()

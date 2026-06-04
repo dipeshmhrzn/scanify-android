@@ -32,7 +32,7 @@ sealed interface FileNavigationEvent {
     data class NavigateToPreview(val documentId: Long) : FileNavigationEvent
     data class OpenExternalFile(val filePath: String, val fileType: String) : FileNavigationEvent
     data class ShowError(val message: String) : FileNavigationEvent
-    data class ShareFile(val filePath: String, val fileType: String) : FileNavigationEvent
+    data class ShareFile(val filePath: String, val fileType: String, val displayName: String) : FileNavigationEvent
 }
 
 @HiltViewModel
@@ -138,7 +138,8 @@ class FileViewModel @Inject constructor(
             _navigationEvent.send(
                 FileNavigationEvent.ShareFile(
                     filePath = document.filePath,
-                    fileType = document.fileType
+                    fileType = document.fileType,
+                    displayName = document.name
                 )
             )
         }

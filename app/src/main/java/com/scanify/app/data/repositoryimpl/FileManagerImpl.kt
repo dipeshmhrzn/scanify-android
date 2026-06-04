@@ -14,7 +14,6 @@ class FileManagerImpl(context: Context) : FileManager {
         try {
             val file = getUniqueFile(fileName)
 
-            // Writing bytes to physical storage must happen on an IO thread
             FileOutputStream(file).use { it.write(bytes) }
             file
         } catch (e: Exception) {
