@@ -85,7 +85,7 @@ fun SettingsRow(
         if (showDivider) {
             HorizontalDivider(
                 thickness = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = .5f)
             )
         }
     }
