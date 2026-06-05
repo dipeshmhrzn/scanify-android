@@ -32,7 +32,10 @@ sealed interface FileNavigationEvent {
     data class NavigateToPreview(val documentId: Long) : FileNavigationEvent
     data class OpenExternalFile(val filePath: String, val fileType: String) : FileNavigationEvent
     data class ShowError(val message: String) : FileNavigationEvent
-    data class ShareFile(val filePath: String, val fileType: String, val displayName: String) : FileNavigationEvent
+
+    data class ShowMessage(val message: String) : FileNavigationEvent
+    data class ShareFile(val filePath: String, val fileType: String, val displayName: String) :
+        FileNavigationEvent
 }
 
 @HiltViewModel
@@ -58,6 +61,9 @@ class FileViewModel @Inject constructor(
 
     private val _isImporting = MutableStateFlow(false)
     val isImporting = _isImporting.asStateFlow()
+
+    private val _isSaving = MutableStateFlow(false)
+    val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
 
     fun onDocumentClick(document: Document) {
         viewModelScope.launch {
@@ -155,6 +161,27 @@ class FileViewModel @Inject constructor(
                         )
                     )
                 }
+        }
+    }
+
+    fun saveDocumentToDevice(document: Document) {
+        viewModelScope.launch {
+            val startTime = System.currentTimeMillis()
+            _isSaving.value = true
+
+            documentUseCases.saveDocumentToDeviceUseCase(document)
+                .onSuccess {
+                    _navigationEvent.send(FileNavigationEvent.ShowMessage("Saved to Documents/Scanify"))
+                }
+                .onFailure { err ->
+                    _navigationEvent.send(
+                        FileNavigationEvent.ShowError(
+                            err.localizedMessage ?: "Failed to save document"
+                        )
+                    )
+                }
+            enforceMinimumDelay(startTime)
+            _isSaving.value = false
         }
     }
 

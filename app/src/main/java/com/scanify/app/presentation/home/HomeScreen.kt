@@ -1,7 +1,11 @@
 package com.scanify.app.presentation.home
 
+import android.Manifest
 import android.content.Intent
+import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -61,10 +65,13 @@ fun HomeScreen(
 
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
 
     var selectedDocForOptions by remember { mutableStateOf<Document?>(null) }
     var docToRename by remember { mutableStateOf<Document?>(null) }
     var docToDelete by remember { mutableStateOf<Document?>(null) }
+    var docToSave by remember { mutableStateOf<Document?>(null) }
+
 
     val onCardClick = remember(viewModel) {
         { doc: Document -> viewModel.onDocumentClick(doc) }
@@ -91,6 +98,19 @@ fun HomeScreen(
         }
     )
 
+    val legacyPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            docToSave?.let { doc ->
+                viewModel.saveDocumentToDevice(doc)
+            }
+        } else {
+            Toast.makeText(context, "Permission denied. Unable to save file.", Toast.LENGTH_LONG).show()
+        }
+        docToSave = null
+    }
+
     LaunchedEffect(Unit) {
         viewModel.navigationEvent.collect { event ->
             when (event) {
@@ -104,6 +124,10 @@ fun HomeScreen(
 
                 is FileNavigationEvent.ShowError -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                }
+
+                is FileNavigationEvent.ShowMessage -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
                 }
 
                 is FileNavigationEvent.ShareFile -> {
@@ -248,6 +272,18 @@ fun HomeScreen(
                     viewModel.shareDocument(document)
                     selectedDocForOptions = null
                 },
+                onSaveClick = {
+                    selectedDocForOptions?.let { document ->
+                        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+                            docToSave = document
+                            legacyPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        } else {
+                            viewModel.saveDocumentToDevice(document)
+                            selectedDocForOptions = null
+
+                        }
+                    }
+                },
                 onDeleteClick = {
                     docToDelete = document
                     selectedDocForOptions = null
@@ -255,7 +291,7 @@ fun HomeScreen(
             )
         }
 
-        if (isOptimizing) {
+        if (isOptimizing || isSaving) {
             Dialog(
                 onDismissRequest = {},
                 properties = DialogProperties(

@@ -1,7 +1,11 @@
 package com.scanify.app.presentation.search
 
+import android.Manifest
 import android.content.Intent
+import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -70,6 +74,7 @@ fun SearchScreen(
     var selectedDocForOptions by remember { mutableStateOf<Document?>(null) }
     var docToRename by remember { mutableStateOf<Document?>(null) }
     var docToDelete by remember { mutableStateOf<Document?>(null) }
+    var docToSave by remember { mutableStateOf<Document?>(null) }
 
 
     val onCardClick = remember(fileViewModel) {
@@ -94,6 +99,10 @@ fun SearchScreen(
 
                 is FileNavigationEvent.OpenExternalFile -> {
                     OfficeFileOpener.openFile(context, event.filePath, event.fileType)
+                }
+
+                is FileNavigationEvent.ShowMessage -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
                 }
 
                 is FileNavigationEvent.ShareFile -> {
@@ -151,6 +160,19 @@ fun SearchScreen(
                 }
             }
         }
+    }
+
+    val legacyPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            docToSave?.let { doc ->
+                fileViewModel.saveDocumentToDevice(doc)
+            }
+        } else {
+            Toast.makeText(context, "Permission denied. Unable to save file.", Toast.LENGTH_LONG).show()
+        }
+        docToSave = null
     }
 
     LaunchedEffect(Unit) {
@@ -240,6 +262,17 @@ fun SearchScreen(
                     onShareClick = {
                         fileViewModel.shareDocument(document)
                         selectedDocForOptions = null
+                    },
+                    onSaveClick = {
+                        selectedDocForOptions?.let { document ->
+                            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+                                docToSave = document
+                                legacyPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                            } else {
+                                fileViewModel.saveDocumentToDevice(document)
+                                selectedDocForOptions = null
+                            }
+                        }
                     },
                     onDeleteClick = {
                         docToDelete = document

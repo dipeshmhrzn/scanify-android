@@ -16,4 +16,6 @@ interface DocumentRepository {
     suspend fun renameDocument(document: Document, newName: String): Result<Unit>
 
     fun searchDocuments(query: String): Flow<List<Document>>
+
+    suspend fun saveDocumentToExternalStorage(document: Document): Result<Unit>
 }

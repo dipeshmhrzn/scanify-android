@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.SaveAlt
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -42,6 +43,7 @@ fun MoreOptionsBottomSheet(
     onDismiss: () -> Unit,
     onRenameClick: () -> Unit,
     onShareClick: () -> Unit,
+    onSaveClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -96,6 +98,22 @@ fun MoreOptionsBottomSheet(
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Column {
+
+                        BottomSheetOption(
+                            icon = Icons.Outlined.SaveAlt,
+                            text = "Save to Device",
+                            onClick = {
+                                onSaveClick()
+                                onDismiss()
+                            }
+                        )
+
+                        HorizontalDivider(
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+                            thickness = 1.dp,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+
                         BottomSheetOption(
                             icon = Icons.Outlined.Edit,
                             text = "Rename",

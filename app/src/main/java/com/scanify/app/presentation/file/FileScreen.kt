@@ -1,6 +1,8 @@
 package com.scanify.app.presentation.file
 
+import android.Manifest
 import android.content.Intent
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -75,6 +77,7 @@ fun FileScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val isImporting by viewModel.isImporting.collectAsStateWithLifecycle()
+    val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
 
     var selectedCategory by remember { mutableStateOf("All") }
     var isGridView by remember { mutableStateOf(true) }
@@ -83,6 +86,7 @@ fun FileScreen(
     var selectedDocForOptions by remember { mutableStateOf<Document?>(null) }
     var docToRename by remember { mutableStateOf<Document?>(null) }
     var docToDelete by remember { mutableStateOf<Document?>(null) }
+    var docToSave by remember { mutableStateOf<Document?>(null) }
     var renameInputText by remember { mutableStateOf("") }
 
     val onCardClick = remember(viewModel) {
@@ -119,6 +123,10 @@ fun FileScreen(
 
                 is FileNavigationEvent.ShowError -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                }
+
+                is FileNavigationEvent.ShowMessage -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
                 }
 
                 is FileNavigationEvent.ShareFile -> {
@@ -175,6 +183,19 @@ fun FileScreen(
     }
 
     var isOptimizing by remember { mutableStateOf(false) }
+
+    val legacyPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            docToSave?.let { doc ->
+                viewModel.saveDocumentToDevice(doc)
+            }
+        } else {
+            Toast.makeText(context, "Permission denied. Unable to save file.", Toast.LENGTH_LONG).show()
+        }
+        docToSave = null
+    }
 
     val launchScanner = rememberDocumentScanner(
         onLoading = { loading -> isOptimizing = loading },
@@ -391,7 +412,7 @@ fun FileScreen(
                 }
             }
         }
-        if (isImporting || isOptimizing) {
+        if (isImporting || isOptimizing || isSaving) {
             Dialog(
                 onDismissRequest = {},
                 properties = DialogProperties(
@@ -425,6 +446,17 @@ fun FileScreen(
                 onShareClick = {
                     viewModel.shareDocument(document)
                     selectedDocForOptions = null
+                },
+                onSaveClick = {
+                    selectedDocForOptions?.let { document ->
+                        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+                            docToSave = document
+                            legacyPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        } else {
+                            viewModel.saveDocumentToDevice(document)
+                            selectedDocForOptions = null
+                        }
+                    }
                 },
                 onDeleteClick = {
                     docToDelete = document
