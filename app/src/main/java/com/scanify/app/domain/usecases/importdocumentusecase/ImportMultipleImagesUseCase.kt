@@ -3,12 +3,13 @@ package com.scanify.app.domain.usecases.importdocumentusecase
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import androidx.core.graphics.scale
-import androidx.core.net.toUri
 import com.scanify.app.domain.model.Document
 import com.scanify.app.domain.repository.DocumentRepository
 import com.scanify.app.domain.repository.FileManager
+import com.scanify.app.domain.repository.UriResolver
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -19,6 +20,7 @@ import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 class ImportMultipleImagesUseCase @Inject constructor(
+    private val uriResolver: UriResolver,
     private val fileManager: FileManager,
     private val documentRepository: DocumentRepository,
     @param:ApplicationContext private val context: Context
@@ -34,23 +36,27 @@ class ImportMultipleImagesUseCase @Inject constructor(
             val tempPdfFile = File(context.cacheDir, "$baseName.pdf")
             val pdfDocument = PdfDocument()
 
-            val maxPageDim = 1200
+            val maxPageDim = 1600
+
+            val pdfPaint = Paint().apply {
+                isAntiAlias = true
+                isFilterBitmap = true
+            }
 
             uriStrings.forEachIndexed { index: Int, uriString: String ->
-                val uri = uriString.toUri()
+                val resolvedData = uriResolver.resolveUri(uriString) ?: return@forEachIndexed
+                val (_, fileBytes: ByteArray) = resolvedData
 
                 val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                context.contentResolver.openInputStream(uri).use { stream ->
-                    BitmapFactory.decodeStream(stream, null, options)
-                }
+                BitmapFactory.decodeByteArray(fileBytes, 0, fileBytes.size, options)
 
                 options.inSampleSize = calculateInSampleSize(options, maxPageDim, maxPageDim)
                 options.inJustDecodeBounds = false
-                options.inPreferredConfig = Bitmap.Config.RGB_565 // Uses 50% less RAM than ARGB_8888
 
-                var bitmap: Bitmap = context.contentResolver.openInputStream(uri).use { stream ->
-                    BitmapFactory.decodeStream(stream, null, options)
-                } ?: return@forEachIndexed
+                options.inPreferredConfig = Bitmap.Config.RGB_565
+
+                var bitmap: Bitmap = BitmapFactory.decodeByteArray(fileBytes, 0, fileBytes.size, options)
+                    ?: return@forEachIndexed
 
                 if (bitmap.width > maxPageDim || bitmap.height > maxPageDim) {
                     val ratio = bitmap.width.toFloat() / bitmap.height.toFloat()
@@ -59,7 +65,8 @@ class ImportMultipleImagesUseCase @Inject constructor(
                     } else {
                         (maxPageDim * ratio).toInt() to maxPageDim
                     }
-                    val scaledBitmap = bitmap.scale(targetW, targetH)
+
+                    val scaledBitmap = bitmap.scale(targetW, targetH, filter = true)
                     if (scaledBitmap != bitmap) {
                         bitmap.recycle()
                         bitmap = scaledBitmap
@@ -69,7 +76,7 @@ class ImportMultipleImagesUseCase @Inject constructor(
                 val pageInfo: PdfDocument.PageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, index + 1).create()
                 val page: PdfDocument.Page = pdfDocument.startPage(pageInfo)
 
-                page.canvas.drawBitmap(bitmap, 0f, 0f, null)
+                page.canvas.drawBitmap(bitmap, 0f, 0f, pdfPaint)
                 pdfDocument.finishPage(page)
                 bitmap.recycle()
             }
