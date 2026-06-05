@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.scanify.app.data.backup.ExportStorageManager
 import com.scanify.app.domain.model.ExportState
+import com.scanify.app.domain.usecases.getdocumentusecases.GetDocumentsUseCase
 import com.scanify.app.domain.usecases.themeusecases.GetThemeModeUseCase
 import com.scanify.app.domain.usecases.themeusecases.UpdateThemeModeUseCase
 import com.scanify.app.ui.theme.ThemeMode
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -20,7 +22,8 @@ import javax.inject.Inject
 class SettingViewModel @Inject constructor(
     getThemeModeUseCase: GetThemeModeUseCase,
     private val updateThemeModeUseCase: UpdateThemeModeUseCase,
-    private val exportStorageManager: ExportStorageManager
+    private val exportStorageManager: ExportStorageManager,
+    private val getDocumentsUseCase: GetDocumentsUseCase
 ): ViewModel() {
 
     val currentThemeMode: StateFlow<ThemeMode> = getThemeModeUseCase().stateIn(
@@ -29,8 +32,17 @@ class SettingViewModel @Inject constructor(
         initialValue = ThemeMode.SYSTEM
     )
 
+
     private val _exportUiState = MutableStateFlow<ExportState>(ExportState.Idle)
     val exportUiState: StateFlow<ExportState> = _exportUiState.asStateFlow()
+
+    val documentCount: StateFlow<Int> = getDocumentsUseCase()
+        .map { it.size }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = 0
+        )
 
 
     fun cycleTheme() {

@@ -59,6 +59,9 @@ fun SettingScreen(
 
     val currentThemeMode by viewModel.currentThemeMode.collectAsStateWithLifecycle()
     val exportState by viewModel.exportUiState.collectAsStateWithLifecycle()
+    val docCount by viewModel.documentCount.collectAsStateWithLifecycle()
+
+    val hasFiles = docCount > 0
 
     val isProcessing = exportState is ExportState.Processing
 
@@ -68,7 +71,11 @@ fun SettingScreen(
         if (isGranted) {
             viewModel.triggerFullBackupExport()
         } else {
-            Toast.makeText(context, "Permission denied. Unable to write backup file.", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                context,
+                "Permission denied. Unable to write backup file.",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 
@@ -76,14 +83,18 @@ fun SettingScreen(
         when (exportState) {
             is ExportState.Success -> {
                 val filePath = (exportState as ExportState.Success).destinationPath
-                Toast.makeText(context, "Export complete! Saved to: $filePath", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "Export complete! Saved to: $filePath", Toast.LENGTH_LONG)
+                    .show()
                 viewModel.resetExportState()
             }
+
             is ExportState.Error -> {
-                val errorMsg = (exportState as ExportState.Error).throwable.localizedMessage ?: "Unknown Error"
+                val errorMsg =
+                    (exportState as ExportState.Error).throwable.localizedMessage ?: "Unknown Error"
                 Toast.makeText(context, "Export failed: $errorMsg", Toast.LENGTH_LONG).show()
                 viewModel.resetExportState()
             }
+
             else -> {}
         }
     }
@@ -183,19 +194,23 @@ fun SettingScreen(
             SettingsCard {
                 SettingsRow(
                     icon = Icons.Rounded.Downloading,
-                    iconBgColor = Color(0xFF2196F3),
+                    iconBgColor = if (hasFiles) Color(0xFF2196F3) else Color.Gray,
                     title = "Backup all files",
-                    subtitle = "Bundle DB and document assets to Documents/Scanify",
+                    subtitle = if (hasFiles) "Bundle DB and document assets to Documents/Scanify" else "No files available to backup",
                     showDivider = false,
                     onClick = {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                            viewModel.triggerFullBackupExport()
+                        if (hasFiles) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                viewModel.triggerFullBackupExport()
+                            } else {
+                                legacyPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                            }
                         } else {
-                            legacyPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                            Toast.makeText(context, "Nothing to backup", Toast.LENGTH_SHORT).show()
                         }
                     },
                     trailingContent = {
-                        ChevronIcon()
+                        if (hasFiles) ChevronIcon()
                     }
                 )
             }
@@ -214,7 +229,7 @@ fun SettingScreen(
                     onClick = { },
                     trailingContent = {
                         Text(
-                            text = "1.0.1",
+                            text = "1.0.0",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodyMedium
                         )

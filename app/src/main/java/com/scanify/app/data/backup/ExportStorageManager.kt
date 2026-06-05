@@ -93,7 +93,7 @@ class ExportStorageManager(
                     put(MediaStore.MediaColumns.MIME_TYPE, "application/zip")
                     put(
                         MediaStore.MediaColumns.RELATIVE_PATH,
-                        "${Environment.DIRECTORY_DOCUMENTS}/Scanify"
+                        "${Environment.DIRECTORY_DOCUMENTS}/Scanify/Backup"
                     )
                 }
                 val collectionUri =
@@ -103,9 +103,10 @@ class ExportStorageManager(
                 resolver.openOutputStream(targetUri)
                     ?: throw IOException("Failed to bind output stream.")
             } else {
+
                 val targetDir = File(
                     Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
-                    "Scanify"
+                    "Scanify/Backup"
                 )
                 if (!targetDir.exists() && !targetDir.mkdirs()) {
                     throw IOException("Failed to establish legacy storage root directories.")
@@ -149,7 +150,7 @@ class ExportStorageManager(
                 zipOut.flush()
             }
 
-            emit(ExportState.Success("Documents/Scanify/$targetZipName"))
+            emit(ExportState.Success("Documents/Scanify/Backup/$targetZipName"))
         } catch (t: Throwable) {
             emit(ExportState.Error(t))
         }
