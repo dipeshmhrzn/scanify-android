@@ -2,12 +2,16 @@ package com.scanify.app.presentation.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.scanify.app.data.backup.ExportStorageManager
+import com.scanify.app.domain.model.ExportState
 import com.scanify.app.domain.usecases.themeusecases.GetThemeModeUseCase
 import com.scanify.app.domain.usecases.themeusecases.UpdateThemeModeUseCase
 import com.scanify.app.ui.theme.ThemeMode
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -15,7 +19,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingViewModel @Inject constructor(
     getThemeModeUseCase: GetThemeModeUseCase,
-    private val updateThemeModeUseCase: UpdateThemeModeUseCase
+    private val updateThemeModeUseCase: UpdateThemeModeUseCase,
+    private val exportStorageManager: ExportStorageManager
 ): ViewModel() {
 
     val currentThemeMode: StateFlow<ThemeMode> = getThemeModeUseCase().stateIn(
@@ -23,6 +28,10 @@ class SettingViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = ThemeMode.SYSTEM
     )
+
+    private val _exportUiState = MutableStateFlow<ExportState>(ExportState.Idle)
+    val exportUiState: StateFlow<ExportState> = _exportUiState.asStateFlow()
+
 
     fun cycleTheme() {
         viewModelScope.launch {
@@ -35,5 +44,18 @@ class SettingViewModel @Inject constructor(
 
             updateThemeModeUseCase(next)
         }
+    }
+
+
+    fun triggerFullBackupExport() {
+        viewModelScope.launch {
+            exportStorageManager.executeFullExport().collect { state ->
+                _exportUiState.value = state
+            }
+        }
+    }
+
+    fun resetExportState() {
+        _exportUiState.value = ExportState.Idle
     }
 }

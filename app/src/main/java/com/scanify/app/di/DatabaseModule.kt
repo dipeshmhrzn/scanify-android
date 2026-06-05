@@ -2,8 +2,10 @@ package com.scanify.app.di
 
 import android.content.Context
 import androidx.room.Room
+import com.scanify.app.data.backup.ExportStorageManager
 import com.scanify.app.data.local.dao.DocumentDao
 import com.scanify.app.data.local.database.DocumentDatabase
+import com.scanify.app.domain.repository.DocumentRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -29,6 +31,21 @@ object DatabaseModule {
     @Singleton
     fun provideDocumentDao(database: DocumentDatabase): DocumentDao {
         return database.documentDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideExportStorageManager(
+        @ApplicationContext context: Context,
+        database: DocumentDatabase,
+        documentRepository: DocumentRepository
+    ): ExportStorageManager {
+        return ExportStorageManager(
+            context = context,
+            database = database,
+            dbName = "scanify_database",
+            documentRepository = documentRepository
+        )
     }
 
 }
