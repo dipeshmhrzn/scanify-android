@@ -8,6 +8,7 @@ import com.scanify.app.domain.usecases.importdocumentusecase.ImportDocumentUseCa
 import com.scanify.app.domain.usecases.importdocumentusecase.ImportMultipleFilesUseCase
 import com.scanify.app.domain.usecases.importdocumentusecase.ImportMultipleImagesUseCase
 import com.scanify.app.domain.usecases.renamedocumentusecases.RenameDocumentUseCase
+import com.scanify.app.domain.usecases.searchdocumentusecase.SearchDocumentsUseCase
 import jakarta.inject.Inject
 
 data class DocumentUseCases @Inject constructor(

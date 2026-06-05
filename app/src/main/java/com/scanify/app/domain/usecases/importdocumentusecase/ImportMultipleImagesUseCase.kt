@@ -4,10 +4,11 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.pdf.PdfDocument
+import androidx.core.graphics.scale
+import androidx.core.net.toUri
 import com.scanify.app.domain.model.Document
 import com.scanify.app.domain.repository.DocumentRepository
 import com.scanify.app.domain.repository.FileManager
-import com.scanify.app.domain.repository.UriResolver
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -16,10 +17,8 @@ import java.io.IOException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
-import androidx.core.graphics.scale
 
 class ImportMultipleImagesUseCase @Inject constructor(
-    private val uriResolver: UriResolver,
     private val fileManager: FileManager,
     private val documentRepository: DocumentRepository,
     @param:ApplicationContext private val context: Context
@@ -38,19 +37,20 @@ class ImportMultipleImagesUseCase @Inject constructor(
             val maxPageDim = 1200
 
             uriStrings.forEachIndexed { index: Int, uriString: String ->
-                val resolvedData = uriResolver.resolveUri(uriString) ?: return@forEachIndexed
-                val (_, fileBytes: ByteArray) = resolvedData
+                val uri = uriString.toUri()
 
                 val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                BitmapFactory.decodeByteArray(fileBytes, 0, fileBytes.size, options)
+                context.contentResolver.openInputStream(uri).use { stream ->
+                    BitmapFactory.decodeStream(stream, null, options)
+                }
 
                 options.inSampleSize = calculateInSampleSize(options, maxPageDim, maxPageDim)
                 options.inJustDecodeBounds = false
-                options.inPreferredConfig = Bitmap.Config.RGB_565
+                options.inPreferredConfig = Bitmap.Config.RGB_565 // Uses 50% less RAM than ARGB_8888
 
-                var bitmap: Bitmap = BitmapFactory.decodeByteArray(fileBytes, 0, fileBytes.size, options)
-                    ?: return@forEachIndexed
-
+                var bitmap: Bitmap = context.contentResolver.openInputStream(uri).use { stream ->
+                    BitmapFactory.decodeStream(stream, null, options)
+                } ?: return@forEachIndexed
 
                 if (bitmap.width > maxPageDim || bitmap.height > maxPageDim) {
                     val ratio = bitmap.width.toFloat() / bitmap.height.toFloat()

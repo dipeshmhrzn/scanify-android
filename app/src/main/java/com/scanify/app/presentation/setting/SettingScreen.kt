@@ -14,6 +14,7 @@ import androidx.compose.material.icons.automirrored.rounded.Chat
 import androidx.compose.material.icons.rounded.Brightness4
 import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.Description
+import androidx.compose.material.icons.rounded.Downloading
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -87,6 +88,26 @@ fun SettingScreen(
                 )
             }
         }
+
+        //Export Section
+        item {
+            Spacer(modifier = Modifier.height(24.dp))
+            SectionTitle("EXPORT")
+            SettingsCard {
+                SettingsRow(
+                    icon = Icons.Rounded.Downloading,
+                    iconBgColor = Color(0xFF2196F3),
+                    title = "Export all files",
+                    subtitle = "Convert all docs to PDF and export to the Download/Scanify",
+                    showDivider = true,
+                    onClick = { },
+                    trailingContent = {
+                        ChevronIcon()
+                    }
+                )
+            }
+        }
+
 
         // ABOUT SECTION
         item {
