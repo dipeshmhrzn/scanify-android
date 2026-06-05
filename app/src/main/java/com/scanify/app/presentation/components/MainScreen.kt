@@ -28,8 +28,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.scanify.app.navigation.Routes
 import com.scanify.app.presentation.util.rememberDocumentScanner
 import com.scanify.app.presentation.viewmodels.FileViewModel
+import okhttp3.Route
 
 @Composable
 fun MainScreen(
@@ -76,7 +78,9 @@ fun MainScreen(
                         .padding(WindowInsets.statusBars.asPaddingValues())
                         .padding(16.dp)
                 ) {
-                    CustomSearchBar()
+                    CustomSearchBar(onClick = {
+                        navController.navigate(Routes.SearchScreen)
+                    })
                 }
             }
         },

@@ -37,4 +37,10 @@ class DocumentRepositoryImpl @Inject constructor(
             }
         }
 
+    override fun searchDocuments(query: String): Flow<List<Document>> {
+        return dao.searchDocuments(query).map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
 }

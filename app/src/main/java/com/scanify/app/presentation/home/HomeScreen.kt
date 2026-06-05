@@ -186,7 +186,7 @@ fun HomeScreen(
                             modifier = Modifier
                                 .fillMaxWidth(),
                             contentAlignment = Alignment.Center
-                        ) { NoFilesScreen("Recent", onScanNowClick = launchScanner) }
+                        ) { NoFilesScreen("No recent files found.", onScanNowClick = launchScanner) }
                     }
                 }
 

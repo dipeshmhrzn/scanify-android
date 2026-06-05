@@ -25,14 +25,16 @@ import androidx.compose.ui.unit.dp
 
 @Preview(showBackground = true)
 @Composable
-fun CustomSearchBar() {
+fun CustomSearchBar(
+    onClick:()-> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)
-            .clickable {  }
+            .clickable(onClick=onClick)
             .padding(horizontal = 16.dp)
     ) {
         Row(

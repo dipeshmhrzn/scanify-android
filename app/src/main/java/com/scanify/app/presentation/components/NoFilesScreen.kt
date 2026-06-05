@@ -58,7 +58,7 @@ fun NoFilesScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "No $text Files Found.",
+            text = text,
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground
         )

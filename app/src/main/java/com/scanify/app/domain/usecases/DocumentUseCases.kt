@@ -18,5 +18,6 @@ data class DocumentUseCases @Inject constructor(
     val importMultipleFiles: ImportMultipleFilesUseCase,
     val importMultipleImages: ImportMultipleImagesUseCase,
     val appendImagesToDocument: AppendImagesToDocumentUseCase,
-    val renameDocumentUseCase: RenameDocumentUseCase
+    val renameDocumentUseCase: RenameDocumentUseCase,
+    val searchDocumentsUseCase: SearchDocumentsUseCase
 )

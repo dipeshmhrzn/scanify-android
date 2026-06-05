@@ -267,7 +267,7 @@ fun FileScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             NoFilesScreen(
-                                text = "Recent",
+                                text = "No recent files found.",
                                 onScanNowClick = launchScanner
                             )
                         }
@@ -351,9 +351,7 @@ fun FileScreen(
                                     .fillMaxWidth(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                val emptyText =
-                                    if (selectedCategory == "All") "Any" else selectedCategory
-                                NoFilesScreen(text = emptyText)
+                                NoFilesScreen(text = "No files found in category : \"$selectedCategory\"")
                             }
 
                         }

@@ -20,6 +20,9 @@ interface DocumentDao {
     @Query("SELECT * FROM documents WHERE id = :id LIMIT 1")
     suspend fun getDocumentById(id: Long): DocumentEntity?
 
+    @Query("SELECT * FROM documents WHERE name LIKE '%' || :searchQuery || '%' ORDER BY createdAtTimeStamp DESC")
+    fun searchDocuments(searchQuery: String): Flow<List<DocumentEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertDocuments(document: DocumentEntity): Long
 

@@ -14,4 +14,6 @@ interface DocumentRepository {
     suspend fun deleteDocument(document: Document)
 
     suspend fun renameDocument(document: Document, newName: String): Result<Unit>
+
+    fun searchDocuments(query: String): Flow<List<Document>>
 }

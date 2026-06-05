@@ -17,6 +17,7 @@ import com.scanify.app.presentation.components.MainScreen
 import com.scanify.app.presentation.file.FileScreen
 import com.scanify.app.presentation.file.PreviewScreen
 import com.scanify.app.presentation.home.HomeScreen
+import com.scanify.app.presentation.search.SearchScreen
 import com.scanify.app.presentation.setting.SettingScreen
 import com.scanify.app.presentation.template.TemplateScreen
 
@@ -117,6 +118,12 @@ fun Navigation(modifier: Modifier = Modifier) {
                 )
             }
 
+            composable<Routes.SearchScreen>(
+                enterTransition = { fadeIn(tween(200)) },
+                exitTransition = { fadeOut(tween(200)) }
+            ) {
+                SearchScreen(navController = navController)
+            }
         }
     }
 
