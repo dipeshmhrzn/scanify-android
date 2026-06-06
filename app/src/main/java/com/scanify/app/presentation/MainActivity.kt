@@ -22,15 +22,21 @@ class MainActivity : ComponentActivity() {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         splashScreen.setKeepOnScreenCondition {
-            viewModel.isLoading.value // Will hold the screen until _isLoading becomes false
+            viewModel.isLoading.value
         }
         enableEdgeToEdge()
         setContent {
-
             val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+            val isCompleted by viewModel.isOnboardingCompleted.collectAsStateWithLifecycle()
+            val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
 
             ScanifyTheme(themeMode = themeMode) {
-                Navigation()
+                if (!isLoading) {
+                    Navigation(
+                        isCompleted = isCompleted,
+                        onOnboardingFinished = { viewModel.completeOnboarding() }
+                    )
+                }
             }
         }
     }

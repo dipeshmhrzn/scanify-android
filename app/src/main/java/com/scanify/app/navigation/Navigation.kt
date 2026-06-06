@@ -6,7 +6,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -21,9 +20,13 @@ import com.scanify.app.presentation.onboarding.OnboardingScreen
 import com.scanify.app.presentation.search.SearchScreen
 import com.scanify.app.presentation.setting.SettingScreen
 import com.scanify.app.presentation.template.TemplateScreen
+import okhttp3.Route
 
 @Composable
-fun Navigation(modifier: Modifier = Modifier) {
+fun Navigation(
+    isCompleted: Boolean,
+    onOnboardingFinished: () -> Unit
+) {
     val navController = rememberNavController()
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -55,7 +58,7 @@ fun Navigation(modifier: Modifier = Modifier) {
     ) {
         NavHost(
             navController = navController,
-            startDestination = Routes.OnBoardingScreen,
+            startDestination = if (isCompleted) Routes.HomeScreen else Routes.OnBoardingScreen,
             enterTransition = {
                 slideIntoContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Left,
@@ -130,7 +133,7 @@ fun Navigation(modifier: Modifier = Modifier) {
                 enterTransition = { fadeIn(tween(200)) },
                 exitTransition = { fadeOut(tween(200)) }
             ) {
-                OnboardingScreen(navController = navController, onOnboardingFinished = {})
+                OnboardingScreen(navController = navController, onOnboardingFinished = onOnboardingFinished)
             }
         }
     }

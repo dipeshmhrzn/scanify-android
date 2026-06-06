@@ -2,32 +2,43 @@ package com.scanify.app.presentation.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.scanify.app.domain.repository.OnboardingPreferenceRepository
 import com.scanify.app.domain.usecases.themeusecases.GetThemeModeUseCase
 import com.scanify.app.ui.theme.ThemeMode
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    getThemeModeUseCase: GetThemeModeUseCase
+    getThemeModeUseCase: GetThemeModeUseCase,
+    private val onboardingRepository: OnboardingPreferenceRepository
 ) : ViewModel() {
 
-    private val _isLoading = MutableStateFlow(true)
-    val isLoading = _isLoading.asStateFlow()
-
-    val themeMode: StateFlow<ThemeMode> = getThemeModeUseCase()
-        .onEach {
-            _isLoading.value = false
-        }
+    // 1. Keep Loading state until both streams emit their first value
+    val isLoading: StateFlow<Boolean> = combine(
+        getThemeModeUseCase(),
+        onboardingRepository.isOnboardingCompleted
+    ) { _, _ -> false }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = ThemeMode.SYSTEM
+            initialValue = true
         )
+
+    val themeMode: StateFlow<ThemeMode> = getThemeModeUseCase()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ThemeMode.SYSTEM)
+
+    val isOnboardingCompleted: StateFlow<Boolean> = onboardingRepository.isOnboardingCompleted
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    fun completeOnboarding() {
+        viewModelScope.launch {
+            onboardingRepository.setOnboardingCompleted(true)
+        }
+    }
 }
