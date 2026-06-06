@@ -1,6 +1,5 @@
 package com.scanify.app.presentation.home
 
-import android.Manifest
 import android.content.Intent
 import android.os.Build
 import android.widget.Toast
@@ -70,7 +69,7 @@ fun HomeScreen(
     var selectedDocForOptions by remember { mutableStateOf<Document?>(null) }
     var docToRename by remember { mutableStateOf<Document?>(null) }
     var docToDelete by remember { mutableStateOf<Document?>(null) }
-    var docToSave by remember { mutableStateOf<Document?>(null) }
+    var docToExportLegacy by remember { mutableStateOf<Document?>(null) }
 
 
     val onCardClick = remember(viewModel) {
@@ -98,17 +97,15 @@ fun HomeScreen(
         }
     )
 
-    val legacyPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            docToSave?.let { doc ->
-                viewModel.saveDocumentToDevice(doc)
+    val exportDocumentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("*/*")
+    ) { uri ->
+        uri?.let { safeUri ->
+            docToExportLegacy?.let { doc ->
+                viewModel.saveToSelectedUri(doc, safeUri)
             }
-        } else {
-            Toast.makeText(context, "Permission denied. Unable to save file.", Toast.LENGTH_LONG).show()
         }
-        docToSave = null
+        docToExportLegacy = null
     }
 
     LaunchedEffect(Unit) {
@@ -273,15 +270,16 @@ fun HomeScreen(
                     selectedDocForOptions = null
                 },
                 onSaveClick = {
-                    selectedDocForOptions?.let { document ->
-                        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
-                            docToSave = document
-                            legacyPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                        } else {
-                            viewModel.saveDocumentToDevice(document)
-                            selectedDocForOptions = null
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        viewModel.autoSaveToDocuments(document)
+                        selectedDocForOptions = null
+                    } else {
+                        docToExportLegacy = document
+                        val extension = document.fileType.lowercase()
+                        val fileNameWithExtension = "${document.name}.$extension"
 
-                        }
+                        exportDocumentLauncher.launch(fileNameWithExtension)
+                        selectedDocForOptions = null
                     }
                 },
                 onDeleteClick = {

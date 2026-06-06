@@ -5,6 +5,7 @@ import com.scanify.app.domain.repository.FileManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileOutputStream
 
 class FileManagerImpl(context: Context) : FileManager {
@@ -13,8 +14,21 @@ class FileManagerImpl(context: Context) : FileManager {
     override suspend fun saveDocumentFile(fileName: String, bytes: ByteArray): File? = withContext(Dispatchers.IO) {
         try {
             val file = getUniqueFile(fileName)
-
             FileOutputStream(file).use { it.write(bytes) }
+            file
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    override suspend fun saveDocumentFile(fileName: String, sourceFile: File): File? = withContext(Dispatchers.IO) {
+        try {
+            val file = getUniqueFile(fileName)
+            FileInputStream(sourceFile).use { input ->
+                FileOutputStream(file).use { output ->
+                    input.copyTo(output)
+                }
+            }
             file
         } catch (e: Exception) {
             null
@@ -34,7 +48,6 @@ class FileManagerImpl(context: Context) : FileManager {
         var counter = 1
         var uniqueFile = File(workspaceDir, fileName)
 
-        // Increment counter until a unique file handle is found
         while (uniqueFile.exists()) {
             uniqueFile = File(workspaceDir, "$nameWithoutExtension ($counter)$dotExtension")
             counter++

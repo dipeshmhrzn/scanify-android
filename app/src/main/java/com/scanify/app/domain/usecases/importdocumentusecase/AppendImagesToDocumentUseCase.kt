@@ -8,6 +8,7 @@ import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
+import androidx.core.graphics.createBitmap
 import androidx.core.graphics.scale
 import com.scanify.app.domain.model.Document
 import com.scanify.app.domain.repository.DocumentRepository
@@ -17,9 +18,10 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.io.IOException
 import javax.inject.Inject
-import androidx.core.graphics.createBitmap
 
 class AppendImagesToDocumentUseCase @Inject constructor(
     private val uriResolver: UriResolver,
@@ -45,7 +47,7 @@ class AppendImagesToDocumentUseCase @Inject constructor(
                 if (!fileTarget.exists()) throw IOException("Physical source file path does not exist.")
 
                 var pageIndexCounter = 0
-                val maxPageDim = 1600 // Consistent Sweet Spot Resolution
+                val maxPageDim = 1600
 
                 val pdfPaint = Paint().apply {
                     isAntiAlias = true
@@ -58,7 +60,6 @@ class AppendImagesToDocumentUseCase @Inject constructor(
                 // 1. RE-RENDER EXISTING PAGES AT HIGHER RESOLUTION
                 for (i: Int in 0 until pdfRenderer.pageCount) {
                     pdfRenderer.openPage(i).use { page ->
-                        // Calculate target dimensions to match our 1600 max dimension
                         val ratio = page.width.toFloat() / page.height.toFloat()
                         val (targetW, targetH) = if (ratio > 1) {
                             maxPageDim to (maxPageDim / ratio).toInt()
@@ -67,9 +68,8 @@ class AppendImagesToDocumentUseCase @Inject constructor(
                         }
 
                         val bitmap = createBitmap(targetW, targetH)
-                        bitmap.eraseColor(Color.WHITE) // Prevent transparent/black background issues
+                        bitmap.eraseColor(Color.WHITE)
 
-                        // By rendering into a larger bitmap, we natively increase the DPI
                         page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
 
                         val pageInfo: PdfDocument.PageInfo = PdfDocument.PageInfo.Builder(
@@ -85,21 +85,19 @@ class AppendImagesToDocumentUseCase @Inject constructor(
                 pdfRenderer.close()
                 pfd.close()
 
-                // 2. APPEND NEW IMAGES USING DYNAMIC SCALING (No hardcoded inSampleSize = 2)
+                // 2. APPEND NEW IMAGES USING STRIPPED PATH RESOLUTION
                 additionalImageUris.forEach { uriString: String ->
                     val resolvedData = uriResolver.resolveUri(uriString) ?: return@forEach
-                    val (_, fileBytes: ByteArray) = resolvedData
+                    val (_, localFilePath: String) = resolvedData // Destructures File Path String
 
                     val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                    BitmapFactory.decodeByteArray(fileBytes, 0, fileBytes.size, options)
+                    BitmapFactory.decodeFile(localFilePath, options) // Decodes directly from file path
 
                     options.inSampleSize = calculateInSampleSize(options, maxPageDim, maxPageDim)
                     options.inJustDecodeBounds = false
                     options.inPreferredConfig = Bitmap.Config.RGB_565
 
-                    var bitmap: Bitmap =
-                        BitmapFactory.decodeByteArray(fileBytes, 0, fileBytes.size, options)
-                            ?: return@forEach
+                    var bitmap: Bitmap = BitmapFactory.decodeFile(localFilePath, options) ?: return@forEach
 
                     if (bitmap.width > maxPageDim || bitmap.height > maxPageDim) {
                         val ratio = bitmap.width.toFloat() / bitmap.height.toFloat()
@@ -130,7 +128,12 @@ class AppendImagesToDocumentUseCase @Inject constructor(
                     pdfDocument.writeTo(output)
                 }
 
-                fileTarget.writeBytes(tempCacheLocation.readBytes())
+                // FIX: Stream transaction contents cleanly to file target without reading bytes to RAM
+                FileInputStream(tempCacheLocation).use { input ->
+                    FileOutputStream(fileTarget).use { output ->
+                        input.copyTo(output)
+                    }
+                }
                 tempCacheLocation.delete()
 
                 val updatedMetadataInstance: Document = existingDoc.copy(
@@ -143,12 +146,8 @@ class AppendImagesToDocumentUseCase @Inject constructor(
                 Result.failure(e)
             } finally {
                 pdfDocument.close()
-                try {
-                    pdfRenderer?.close()
-                } catch (ignored: Exception) {}
-                try {
-                    pfd?.close()
-                } catch (ignored: Exception) {}
+                try { pdfRenderer?.close() } catch (ignored: Exception) {}
+                try { pfd?.close() } catch (ignored: Exception) {}
             }
         }
 

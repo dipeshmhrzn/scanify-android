@@ -1,8 +1,8 @@
 package com.scanify.app.domain.usecases.importdocumentusecase
 
-
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import androidx.core.graphics.scale
 import com.scanify.app.domain.model.Document
 import com.scanify.app.domain.repository.DocumentRepository
 import com.scanify.app.domain.repository.FileManager
@@ -14,7 +14,6 @@ import java.io.File
 import java.io.IOException
 import java.time.LocalDateTime
 import javax.inject.Inject
-import androidx.core.graphics.scale
 
 class ImportDocumentUseCase @Inject constructor(
     private val uriResolver: UriResolver,
@@ -26,15 +25,24 @@ class ImportDocumentUseCase @Inject constructor(
             val resolvedData = uriResolver.resolveUri(uriString)
                 ?: return@withContext Result.failure(IOException("Failed to resolve file URI."))
 
-            var (fileName: String, fileBytes: ByteArray) = resolvedData
+            // 1. Updated destructuring: localFilePath is now a String path, not a ByteArray
+            val (fileName: String, localFilePath: String) = resolvedData
             val extension = fileName.substringAfterLast('.', "").uppercase()
 
-            if (extension in setOf("JPG", "JPEG", "PNG", "WEBP")) {
-                fileBytes = compressImageBytes(fileBytes)
+            val savedFile: File? = if (extension in setOf("JPG", "JPEG", "PNG", "WEBP")) {
+                // Compress using the local file path and get bytes back
+                val compressedBytes = compressImageFromFile(localFilePath)
+                fileManager.saveDocumentFile(fileName, compressedBytes)
+            } else {
+                // ⚠️ Note: If fileManager only accepts ByteArrays right now, we read bytes here.
+                // See optimization note below to make this 100% memory safe for huge PDFs!
+                val fileBytes = File(localFilePath).readBytes()
+                fileManager.saveDocumentFile(fileName, fileBytes)
             }
 
-            val savedFile: File = fileManager.saveDocumentFile(fileName, fileBytes)
-                ?: return@withContext Result.failure(IOException("Failed to write file to internal storage."))
+            if (savedFile == null) {
+                return@withContext Result.failure(IOException("Failed to write file to internal storage."))
+            }
 
             val cleanName: String = savedFile.nameWithoutExtension
             val finalExtension: String = savedFile.extension.uppercase()
@@ -54,16 +62,18 @@ class ImportDocumentUseCase @Inject constructor(
         }
     }
 
-    private fun compressImageBytes(bytes: ByteArray): ByteArray {
+    // 2. Updated to accept a file path string instead of loading raw bytes into memory
+    private fun compressImageFromFile(filePath: String): ByteArray {
         val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
+        BitmapFactory.decodeFile(filePath, options) // Uses path directly
 
         val maxDim = 1600
         options.inSampleSize = calculateInSampleSize(options, maxDim, maxDim)
         options.inJustDecodeBounds = false
         options.inPreferredConfig = Bitmap.Config.RGB_565
 
-        var bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options) ?: return bytes
+        // Decode the sampled down bitmap from the file system
+        var bitmap = BitmapFactory.decodeFile(filePath, options) ?: return File(filePath).readBytes()
 
         if (bitmap.width > maxDim || bitmap.height > maxDim) {
             val ratio = bitmap.width.toFloat() / bitmap.height.toFloat()

@@ -62,20 +62,13 @@ fun SettingScreen(
     val docCount by viewModel.documentCount.collectAsStateWithLifecycle()
 
     val hasFiles = docCount > 0
-
     val isProcessing = exportState is ExportState.Processing
 
-    val legacyPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            viewModel.triggerFullBackupExport()
-        } else {
-            Toast.makeText(
-                context,
-                "Permission denied. Unable to write backup file.",
-                Toast.LENGTH_LONG
-            ).show()
+    val backupFilePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri ->
+        uri?.let { safeUri ->
+            viewModel.triggerFullBackupExport(safeUri)
         }
     }
 
@@ -203,7 +196,9 @@ fun SettingScreen(
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                                 viewModel.triggerFullBackupExport()
                             } else {
-                                legacyPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                                val timestamp = java.time.LocalDateTime.now()
+                                    .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
+                                backupFilePickerLauncher.launch("Scanify_Backup_$timestamp.zip")
                             }
                         } else {
                             Toast.makeText(context, "Nothing to backup", Toast.LENGTH_SHORT).show()

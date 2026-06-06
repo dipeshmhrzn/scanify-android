@@ -58,10 +58,9 @@ class SettingViewModel @Inject constructor(
         }
     }
 
-
-    fun triggerFullBackupExport() {
+    fun triggerFullBackupExport(targetUri: android.net.Uri? = null) {
         viewModelScope.launch {
-            exportStorageManager.executeFullExport().collect { state ->
+            exportStorageManager.executeFullExport(targetUri).collect { state ->
                 _exportUiState.value = state
             }
         }

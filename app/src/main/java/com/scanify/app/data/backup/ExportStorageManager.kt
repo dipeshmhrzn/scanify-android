@@ -2,6 +2,7 @@ package com.scanify.app.data.backup
 
 import android.content.ContentValues
 import android.content.Context
+import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
@@ -19,7 +20,6 @@ import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileInputStream
-import java.io.FileOutputStream
 import java.io.IOException
 import java.io.OutputStream
 import java.time.LocalDateTime
@@ -34,22 +34,16 @@ class ExportStorageManager(
     private val documentRepository: DocumentRepository
 ) {
 
-    fun executeFullExport(): Flow<ExportState> = flow {
+    fun executeFullExport(targetUri: Uri? = null): Flow<ExportState> = flow {
         emit(ExportState.Processing(progress = 0.0f, currentFileName = "Preparing database..."))
 
         try {
             checkpointDatabase()
 
             val exportList = mutableListOf<ExportableItem>()
-
             val dbFile = context.getDatabasePath(dbName)
             if (dbFile.exists()) {
-                exportList.add(
-                    ExportableItem(
-                        fileLabel = "backup_database.db",
-                        systemFile = dbFile
-                    )
-                )
+                exportList.add(ExportableItem(fileLabel = "backup_database.db", systemFile = dbFile))
             }
 
             val structuralDocuments = documentRepository.getAllDocuments().first()
@@ -57,19 +51,12 @@ class ExportStorageManager(
                 val file = File(doc.filePath)
                 if (file.exists()) {
                     val extension = file.extension
-
                     var fileName = doc.name
 
-                    if (extension.isNotEmpty() && !fileName.endsWith(
-                            ".$extension",
-                            ignoreCase = true
-                        )
-                    ) {
+                    if (extension.isNotEmpty() && !fileName.endsWith(".$extension", ignoreCase = true)) {
                         fileName += ".$extension"
                     }
-
                     val exportLabel = "Documents/$fileName"
-
                     exportList.add(ExportableItem(fileLabel = exportLabel, systemFile = file))
                 }
             }
@@ -82,44 +69,32 @@ class ExportStorageManager(
             val totalBytes = exportList.sumOf { it.systemFile.length() }
             var totalBytesWritten = 0L
 
-            val timestamp =
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
+            val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
             val targetZipName = "Scanify_Backup_$timestamp.zip"
 
-            val outputStream: OutputStream = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val outputStream: OutputStream = if (targetUri != null) {
+                context.contentResolver.openOutputStream(targetUri)
+                    ?: throw IOException("Failed to bind output stream to selected destination.")
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 val resolver = context.contentResolver
                 val contentValues = ContentValues().apply {
                     put(MediaStore.MediaColumns.DISPLAY_NAME, targetZipName)
                     put(MediaStore.MediaColumns.MIME_TYPE, "application/zip")
-                    put(
-                        MediaStore.MediaColumns.RELATIVE_PATH,
-                        "${Environment.DIRECTORY_DOCUMENTS}/Scanify/Backup"
-                    )
+                    put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_DOCUMENTS}/Scanify/Backup")
                 }
-                val collectionUri =
-                    MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
-                val targetUri = resolver.insert(collectionUri, contentValues)
+                val collectionUri = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+                val insertedUri = resolver.insert(collectionUri, contentValues)
                     ?: throw IOException("Failed to initialize MediaStore directory entry.")
-                resolver.openOutputStream(targetUri)
-                    ?: throw IOException("Failed to bind output stream.")
+                resolver.openOutputStream(insertedUri) ?: throw IOException("Failed to bind output stream.")
             } else {
-
-                val targetDir = File(
-                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
-                    "Scanify/Backup"
-                )
-                if (!targetDir.exists() && !targetDir.mkdirs()) {
-                    throw IOException("Failed to establish legacy storage root directories.")
-                }
-                FileOutputStream(File(targetDir, targetZipName))
+                throw IOException("Direct saving is unsupported on this SDK version without user target selection.")
             }
 
             ZipOutputStream(BufferedOutputStream(outputStream)).use { zipOut ->
                 zipOut.setLevel(java.util.zip.Deflater.DEFAULT_COMPRESSION)
-                val dataBuffer = ByteArray(16384) // 16KB high-performance buffer
+                val dataBuffer = ByteArray(16384)
 
                 for (item in exportList) {
-
                     val displayName = item.fileLabel.substringAfter("Documents/")
 
                     emit(
@@ -140,7 +115,7 @@ class ExportStorageManager(
                             emit(
                                 ExportState.Processing(
                                     progress = totalBytesWritten.toFloat() / totalBytes.toFloat(),
-                                    currentFileName =displayName
+                                    currentFileName = displayName
                                 )
                             )
                         }
@@ -150,7 +125,8 @@ class ExportStorageManager(
                 zipOut.flush()
             }
 
-            emit(ExportState.Success("Documents/Scanify/Backup/$targetZipName"))
+            val finalDisplayPath = if (targetUri != null) "Selected Location" else "Documents/Scanify/Backup/$targetZipName"
+            emit(ExportState.Success(finalDisplayPath))
         } catch (t: Throwable) {
             emit(ExportState.Error(t))
         }

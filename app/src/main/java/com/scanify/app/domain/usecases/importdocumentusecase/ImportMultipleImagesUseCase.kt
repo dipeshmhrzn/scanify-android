@@ -45,18 +45,16 @@ class ImportMultipleImagesUseCase @Inject constructor(
 
             uriStrings.forEachIndexed { index: Int, uriString: String ->
                 val resolvedData = uriResolver.resolveUri(uriString) ?: return@forEachIndexed
-                val (_, fileBytes: ByteArray) = resolvedData
+                val (_, localFilePath: String) = resolvedData // Destructures File Path String
 
                 val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                BitmapFactory.decodeByteArray(fileBytes, 0, fileBytes.size, options)
+                BitmapFactory.decodeFile(localFilePath, options) // Decodes info directly from file system
 
                 options.inSampleSize = calculateInSampleSize(options, maxPageDim, maxPageDim)
                 options.inJustDecodeBounds = false
-
                 options.inPreferredConfig = Bitmap.Config.RGB_565
 
-                var bitmap: Bitmap = BitmapFactory.decodeByteArray(fileBytes, 0, fileBytes.size, options)
-                    ?: return@forEachIndexed
+                var bitmap: Bitmap = BitmapFactory.decodeFile(localFilePath, options) ?: return@forEachIndexed
 
                 if (bitmap.width > maxPageDim || bitmap.height > maxPageDim) {
                     val ratio = bitmap.width.toFloat() / bitmap.height.toFloat()
@@ -89,7 +87,8 @@ class ImportMultipleImagesUseCase @Inject constructor(
                 pdfDocument.close()
             }
 
-            val savedFile: File = fileManager.saveDocumentFile("$baseName.pdf", tempPdfFile.readBytes())
+            // FIX: Pass the file object directly instead of tempPdfFile.readBytes()
+            val savedFile: File = fileManager.saveDocumentFile("$baseName.pdf", tempPdfFile)
                 ?: throw IOException("Failed to save generated multi-page asset.")
 
             tempPdfFile.delete()

@@ -6,6 +6,8 @@ interface FileManager {
 
     suspend fun saveDocumentFile(fileName: String, bytes: ByteArray): File?
 
+    suspend fun saveDocumentFile(fileName: String, sourceFile: File): File?
+
     fun getReadableFileSize(file: File): String
 
 }
