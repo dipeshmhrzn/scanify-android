@@ -1,4 +1,4 @@
-package com.scanify.app.domain.usecases
+package com.scanify.app.domain.usecases.importdocumentusecase
 
 import com.scanify.app.domain.model.Document
 import com.scanify.app.domain.repository.DocumentRepository

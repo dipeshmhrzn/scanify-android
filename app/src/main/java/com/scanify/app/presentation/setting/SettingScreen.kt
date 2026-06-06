@@ -1,6 +1,5 @@
 package com.scanify.app.presentation.setting
 
-import android.Manifest
 import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult

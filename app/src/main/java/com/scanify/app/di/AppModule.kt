@@ -6,12 +6,9 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
 import com.scanify.app.data.repositoryimpl.FileManagerImpl
-import com.scanify.app.data.repositoryimpl.ThemePreferenceRepositoryImpl
 import com.scanify.app.data.repositoryimpl.UriResolverImpl
 import com.scanify.app.domain.repository.FileManager
-import com.scanify.app.domain.repository.ThemePreferenceRepository
 import com.scanify.app.domain.repository.UriResolver
-import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

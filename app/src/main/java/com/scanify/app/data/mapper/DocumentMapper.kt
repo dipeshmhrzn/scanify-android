@@ -16,7 +16,7 @@ fun DocumentEntity.toDomain(): Document = Document(
         Instant.ofEpochMilli(createdAtTimeStamp),
         ZoneId.systemDefault()
     ),
-    isImageBundle= isImageBundle
+    isImageBundle = isImageBundle
 )
 
 fun Document.toEntity(): DocumentEntity = DocumentEntity(

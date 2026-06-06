@@ -5,19 +5,19 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
+import androidx.core.graphics.createBitmap
 import coil3.ImageLoader
 import coil3.asImage
 import coil3.decode.DataSource
 import coil3.fetch.FetchResult
 import coil3.fetch.Fetcher
 import coil3.fetch.ImageFetchResult
+import coil3.key.Keyer
 import coil3.request.Options
+import coil3.size.pxOrElse
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.File
-import androidx.core.graphics.createBitmap
-import coil3.key.Keyer
-import coil3.size.pxOrElse
 
 data class DocumentPageRequest(
     val filePath: String,

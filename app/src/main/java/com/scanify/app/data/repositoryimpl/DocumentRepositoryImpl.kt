@@ -82,7 +82,7 @@ class DocumentRepositoryImpl @Inject constructor(
                         put(
                             MediaStore.MediaColumns.IS_PENDING,
                             1
-                        ) // Tells system file is actively writing
+                        )
                     }
 
                     val collection =

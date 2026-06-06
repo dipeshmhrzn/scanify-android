@@ -1,11 +1,9 @@
 package com.scanify.app.presentation.components
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DashboardCustomize
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar

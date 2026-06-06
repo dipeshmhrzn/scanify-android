@@ -20,7 +20,6 @@ import com.scanify.app.presentation.onboarding.OnboardingScreen
 import com.scanify.app.presentation.search.SearchScreen
 import com.scanify.app.presentation.setting.SettingScreen
 import com.scanify.app.presentation.template.TemplateScreen
-import okhttp3.Route
 
 @Composable
 fun Navigation(

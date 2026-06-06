@@ -45,10 +45,10 @@ class ImportMultipleImagesUseCase @Inject constructor(
 
             uriStrings.forEachIndexed { index: Int, uriString: String ->
                 val resolvedData = uriResolver.resolveUri(uriString) ?: return@forEachIndexed
-                val (_, localFilePath: String) = resolvedData // Destructures File Path String
+                val (_, localFilePath: String) = resolvedData
 
                 val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                BitmapFactory.decodeFile(localFilePath, options) // Decodes info directly from file system
+                BitmapFactory.decodeFile(localFilePath, options)
 
                 options.inSampleSize = calculateInSampleSize(options, maxPageDim, maxPageDim)
                 options.inJustDecodeBounds = false
@@ -87,7 +87,6 @@ class ImportMultipleImagesUseCase @Inject constructor(
                 pdfDocument.close()
             }
 
-            // FIX: Pass the file object directly instead of tempPdfFile.readBytes()
             val savedFile: File = fileManager.saveDocumentFile("$baseName.pdf", tempPdfFile)
                 ?: throw IOException("Failed to save generated multi-page asset.")
 

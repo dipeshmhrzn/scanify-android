@@ -31,7 +31,6 @@ import androidx.navigation.NavHostController
 import com.scanify.app.navigation.Routes
 import com.scanify.app.presentation.util.rememberDocumentScanner
 import com.scanify.app.presentation.viewmodels.FileViewModel
-import okhttp3.Route
 
 @Composable
 fun MainScreen(
