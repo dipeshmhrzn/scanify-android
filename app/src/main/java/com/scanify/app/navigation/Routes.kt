@@ -22,5 +22,8 @@ sealed class Routes {
     @Serializable
     data object SearchScreen: Routes()
 
+    @Serializable
+    data object OnBoardingScreen: Routes()
+
 
 }
