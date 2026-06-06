@@ -1,11 +1,13 @@
 package com.scanify.app.navigation
 
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.unit.IntOffset
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -47,7 +49,8 @@ fun Navigation(
     val showFAB =
         currentDestination?.hasRoute<Routes.HomeScreen>() == true || currentDestination?.hasRoute<Routes.FileScreen>() == true
 
-
+    val navAnimationSpec = tween<Float>(durationMillis = 300, easing = FastOutSlowInEasing)
+    val navOffsetSpec = tween<IntOffset>(durationMillis = 300, easing = FastOutSlowInEasing)
 
     MainScreen(
         navController = navController,
@@ -61,59 +64,46 @@ fun Navigation(
             enterTransition = {
                 slideIntoContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                    animationSpec = tween(300)
-                )
+                    animationSpec = navOffsetSpec
+                ) + fadeIn(animationSpec = navAnimationSpec)
             },
             exitTransition = {
                 slideOutOfContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                    animationSpec = tween(300)
-                ) + fadeOut(tween(300))
+                    animationSpec = navOffsetSpec
+                ) + fadeOut(animationSpec = navAnimationSpec)
             },
             popEnterTransition = {
                 slideIntoContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = tween(300)
-                )
+                    animationSpec = navOffsetSpec
+                ) + fadeIn(animationSpec = navAnimationSpec)
             },
             popExitTransition = {
                 slideOutOfContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = tween(300)
-                )
+                    animationSpec = navOffsetSpec
+                ) + fadeOut(animationSpec = navAnimationSpec)
             }
         ) {
 
-            composable<Routes.HomeScreen>(
-                enterTransition = { fadeIn(tween(200)) },
-                exitTransition = { fadeOut(tween(200)) }
-            ) {
+            composable<Routes.HomeScreen> {
                 HomeScreen(navController)
             }
 
-            composable<Routes.FileScreen>(
-                enterTransition = { fadeIn(tween(200)) },
-                exitTransition = { fadeOut(tween(200)) }
-            ) {
+            composable<Routes.FileScreen> {
                 FileScreen(navController)
             }
 
-            composable<Routes.TemplateScreen>(
-                enterTransition = { fadeIn(tween(200)) },
-                exitTransition = { fadeOut(tween(200)) }) {
+            composable<Routes.TemplateScreen> {
                 TemplateScreen(navController)
             }
 
-            composable<Routes.SettingScreen>(
-                enterTransition = { fadeIn(tween(200)) },
-                exitTransition = { fadeOut(tween(200)) }) {
+            composable<Routes.SettingScreen> {
                 SettingScreen(navController)
             }
 
-            composable<Routes.PreviewScreen>(
-                enterTransition = { fadeIn(tween(200)) },
-                exitTransition = { fadeOut(tween(200)) }
-            ) { backStackEntry ->
+            composable<Routes.PreviewScreen>{ backStackEntry ->
                 val previewRoute: Routes.PreviewScreen = backStackEntry.toRoute()
                 PreviewScreen(
                     documentId = previewRoute.id,
@@ -121,18 +111,15 @@ fun Navigation(
                 )
             }
 
-            composable<Routes.SearchScreen>(
-                enterTransition = { fadeIn(tween(200)) },
-                exitTransition = { fadeOut(tween(200)) }
-            ) {
+            composable<Routes.SearchScreen>{
                 SearchScreen(navController = navController)
             }
 
-            composable<Routes.OnBoardingScreen>(
-                enterTransition = { fadeIn(tween(200)) },
-                exitTransition = { fadeOut(tween(200)) }
-            ) {
-                OnboardingScreen(navController = navController, onOnboardingFinished = onOnboardingFinished)
+            composable<Routes.OnBoardingScreen>{
+                OnboardingScreen(
+                    navController = navController,
+                    onOnboardingFinished = onOnboardingFinished
+                )
             }
         }
     }

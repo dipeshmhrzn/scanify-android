@@ -1,6 +1,7 @@
 package com.scanify.app.presentation.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
@@ -23,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -44,6 +46,9 @@ fun MainScreen(
 
     var isOptimizing by remember { mutableStateOf(false) }
 
+    val animationSpec = tween<Float>(durationMillis = 300, easing = FastOutSlowInEasing)
+    val intOffsetAnimationSpec = tween<IntOffset>(durationMillis = 300, easing = FastOutSlowInEasing)
+
     val launchScanner = rememberDocumentScanner(
         onLoading = { loading -> isOptimizing = loading },
         onSuccess = { imageUris, pdfUri ->
@@ -56,9 +61,9 @@ fun MainScreen(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             AnimatedVisibility(
-                visible = showBottomBar, enter = slideInVertically(
-                    animationSpec = tween(300), initialOffsetY = { it }), exit = slideOutVertically(
-                    animationSpec = tween(300), targetOffsetY = { it })
+                visible = showBottomBar,
+                enter = slideInVertically(animationSpec = intOffsetAnimationSpec, initialOffsetY = { it }),
+                exit = slideOutVertically(animationSpec = intOffsetAnimationSpec, targetOffsetY = { it })
             ) {
                 NavBar(navController, selectedTab)
             }
@@ -66,10 +71,8 @@ fun MainScreen(
         topBar = {
             AnimatedVisibility(
                 visible = showFAB,
-                enter = slideInVertically(
-                    animationSpec = tween(300), initialOffsetY = { -it }),
-                exit = slideOutVertically(
-                    animationSpec = tween(300), targetOffsetY = { -it })
+                enter = slideInVertically(animationSpec = intOffsetAnimationSpec, initialOffsetY = { -it }),
+                exit = slideOutVertically(animationSpec = intOffsetAnimationSpec, targetOffsetY = { -it })
             ) {
                 Box(
                     modifier = Modifier
@@ -95,10 +98,7 @@ fun MainScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(
-                    bottom = if (showBottomBar) innerPadding.calculateBottomPadding() else 0.dp,
-                    top = if (showFAB) innerPadding.calculateTopPadding() else 0.dp
-                )
+                .padding(innerPadding)
         ) {
             content()
         }
