@@ -1,6 +1,5 @@
 package com.scanify.app.presentation.setting
 
-import android.net.Uri
 import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -32,6 +31,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -40,17 +42,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.scanify.app.domain.model.ExportState
 import com.scanify.app.presentation.setting.components.ChevronIcon
+import com.scanify.app.presentation.setting.components.EmailBottomSheet
 import com.scanify.app.presentation.setting.components.SectionTitle
 import com.scanify.app.presentation.setting.components.SettingsCard
 import com.scanify.app.presentation.setting.components.SettingsRow
+import com.scanify.app.presentation.util.sendEmail
 import com.scanify.app.presentation.viewmodels.SettingViewModel
 import com.scanify.app.ui.theme.BrandGradient
-import androidx.core.net.toUri
 
 @Composable
 fun SettingScreen(
@@ -65,6 +69,8 @@ fun SettingScreen(
 
     val hasFiles = docCount > 0
     val isProcessing = exportState is ExportState.Processing
+
+    var activeSheetType by remember { mutableStateOf<EmailSheetType?>(null) }
 
     val backupFilePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/zip")
@@ -256,7 +262,7 @@ fun SettingScreen(
                     title = "Report a Bug",
                     subtitle = "Help us improve Scanify",
                     showDivider = true,
-                    onClick = { },
+                    onClick = { activeSheetType = EmailSheetType.BUG },
                     trailingContent = {
                         ChevronIcon()
                     }
@@ -267,12 +273,51 @@ fun SettingScreen(
                     title = "Feedback",
                     subtitle = "Share your thoughts",
                     showDivider = false,
-                    onClick = { },
+                    onClick = { activeSheetType = EmailSheetType.FEEDBACK },
                     trailingContent = {
                         ChevronIcon()
                     }
                 )
             }
         }
+
+        item {
+            activeSheetType?.let { config ->
+                EmailBottomSheet(
+                    title = config.title,
+                    subtitle = config.subtitle,
+                    subjectPlaceholder = config.subjectPlaceholder,
+                    bodyPlaceholder = config.bodyPlaceholder,
+                    onDismiss = { activeSheetType = null },
+                    onSubmit = { subject, description ->
+                        sendEmail(context, "${config.emailPrefix} $subject", description)
+                    }
+                )
+            }
+        }
     }
+}
+
+
+enum class EmailSheetType(
+    val title: String,
+    val subtitle: String,
+    val subjectPlaceholder: String,
+    val bodyPlaceholder: String,
+    val emailPrefix: String
+) {
+    BUG(
+        title = "Report a bug",
+        subtitle = "Let us know any specific issue you experienced",
+        subjectPlaceholder = "Title",
+        bodyPlaceholder = "Describe the bug experienced as detailed as you can",
+        emailPrefix = "[Bug Report]"
+    ),
+    FEEDBACK(
+        title = "Share Feedback",
+        subtitle = "We'd love to hear your thoughts and suggestions",
+        subjectPlaceholder = "Subject",
+        bodyPlaceholder = "Tell us what you like or how we can improve",
+        emailPrefix = "[Feedback]"
+    )
 }
