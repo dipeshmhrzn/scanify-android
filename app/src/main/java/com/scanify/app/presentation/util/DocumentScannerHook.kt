@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
 import android.widget.Toast
@@ -111,12 +112,11 @@ private suspend fun optimizeScannedImage(context: Context, uriString: String): S
                 BitmapFactory.decodeStream(stream, null, options)
             }
 
-            val TARGET_MAX_DIMEN = 1000
+            val TARGET_MAX_DIMEN = 1600
             options.inSampleSize =
                 calculateInSampleSize(options.outWidth, options.outHeight, TARGET_MAX_DIMEN)
             options.inJustDecodeBounds = false
-            options.inPreferredConfig = Bitmap.Config.RGB_565
-
+            options.inPreferredConfig = Bitmap.Config.ARGB_8888
             val decodedBitmap = context.contentResolver.openInputStream(uri).use { stream ->
                 BitmapFactory.decodeStream(stream, null, options)
             } ?: return@withContext null
@@ -136,7 +136,7 @@ private suspend fun optimizeScannedImage(context: Context, uriString: String): S
 
             val optimizedFile = File.createTempFile("opt_scan_", ".jpg", context.cacheDir)
             FileOutputStream(optimizedFile).use { outStream ->
-                finalBitmap.compress(Bitmap.CompressFormat.JPEG, 72, outStream)
+                finalBitmap.compress(Bitmap.CompressFormat.JPEG, 88, outStream)
             }
 
             finalBitmap.recycle()
@@ -158,6 +158,11 @@ private suspend fun createOptimizedPdf(
 
             val A4_WIDTH = 595
             val A4_HEIGHT = 842
+
+            val paint = Paint().apply {
+                isFilterBitmap = true
+                isAntiAlias = true
+            }
 
             compressedImageUris.forEachIndexed { index, uriStr ->
                 val file = File(uriStr.toUri().path ?: return@forEachIndexed)
@@ -191,7 +196,7 @@ private suspend fun createOptimizedPdf(
                 val paddingLeft = (targetPageWidth - scaledWidth) / 2f
                 val paddingTop = (targetPageHeight - scaledHeight) / 2f
 
-                page.canvas.drawBitmap(finalScaledBitmap, paddingLeft, paddingTop, null)
+                page.canvas.drawBitmap(finalScaledBitmap, paddingLeft, paddingTop, paint)
                 pdfDocument.finishPage(page)
 
                 finalScaledBitmap.recycle()
