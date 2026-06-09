@@ -87,4 +87,6 @@ dependencies {
 
     implementation(libs.play.services.mlkit.document.scanner)
 
+    implementation(libs.androidx.browser)
+
 }

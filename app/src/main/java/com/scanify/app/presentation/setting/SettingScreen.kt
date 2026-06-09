@@ -1,9 +1,11 @@
 package com.scanify.app.presentation.setting
 
+import android.net.Uri
 import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -48,6 +50,7 @@ import com.scanify.app.presentation.setting.components.SettingsCard
 import com.scanify.app.presentation.setting.components.SettingsRow
 import com.scanify.app.presentation.viewmodels.SettingViewModel
 import com.scanify.app.ui.theme.BrandGradient
+import androidx.core.net.toUri
 
 @Composable
 fun SettingScreen(
@@ -69,6 +72,14 @@ fun SettingScreen(
         uri?.let { safeUri ->
             viewModel.triggerFullBackupExport(safeUri)
         }
+    }
+
+    val openPrivacyPolicy = {
+        val url = "https://sites.google.com/view/scanify-labs-privacy/home"
+        val intent = CustomTabsIntent.Builder()
+            .setShowTitle(true)
+            .build()
+        intent.launchUrl(context, url.toUri())
     }
 
     LaunchedEffect(exportState) {
@@ -234,7 +245,7 @@ fun SettingScreen(
                     iconBgColor = MaterialTheme.colorScheme.primary,
                     title = "Privacy Policy",
                     showDivider = true,
-                    onClick = { },
+                    onClick = { openPrivacyPolicy() },
                     trailingContent = {
                         ChevronIcon()
                     }
