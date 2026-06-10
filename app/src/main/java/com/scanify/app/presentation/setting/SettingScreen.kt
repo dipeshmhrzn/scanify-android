@@ -46,6 +46,7 @@ import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.scanify.app.BuildConfig
 import com.scanify.app.domain.model.ExportState
 import com.scanify.app.presentation.setting.components.ChevronIcon
 import com.scanify.app.presentation.setting.components.EmailBottomSheet
@@ -158,12 +159,11 @@ fun SettingScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(vertical = 24.dp)
     ) {
 
         // APPEARANCE SECTION
         item {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             SectionTitle("APPEARANCE")
             SettingsCard {
                 SettingsRow(
@@ -240,7 +240,7 @@ fun SettingScreen(
                     onClick = { },
                     trailingContent = {
                         Text(
-                            text = "1.0.0",
+                            text = BuildConfig.VERSION_NAME,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodyMedium
                         )

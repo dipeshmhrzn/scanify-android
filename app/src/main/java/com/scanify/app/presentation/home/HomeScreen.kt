@@ -213,7 +213,6 @@ fun HomeScreen(
 
                 is FileUiState.Success -> {
                     item {
-
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween

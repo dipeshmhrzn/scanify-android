@@ -5,6 +5,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
+import com.google.android.play.core.appupdate.AppUpdateManager
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.scanify.app.data.repositoryimpl.FileManagerImpl
 import com.scanify.app.data.repositoryimpl.UriResolverImpl
 import com.scanify.app.domain.repository.FileManager
@@ -38,4 +40,9 @@ object AppModule {
     fun provideUriResolver(@ApplicationContext context: Context): UriResolver =
         UriResolverImpl(context)
 
+    @Provides
+    @Singleton
+    fun provideAppUpdateManager(@ApplicationContext context: Context): AppUpdateManager {
+        return AppUpdateManagerFactory.create(context)
+    }
 }

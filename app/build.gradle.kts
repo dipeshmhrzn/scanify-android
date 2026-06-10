@@ -43,6 +43,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -88,5 +89,8 @@ dependencies {
     implementation(libs.play.services.mlkit.document.scanner)
 
     implementation(libs.androidx.browser)
+
+    implementation(libs.app.update)
+    implementation(libs.app.update.ktx)
 
 }

@@ -180,8 +180,7 @@ fun SearchScreen(
         topBar = {
             Box(
                 modifier = Modifier
-                    .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
-                    .padding(vertical = 12.dp)
+                    .padding(bottom = 16.dp)
             ) {
                 SearchBar(
                     query = searchQuery,

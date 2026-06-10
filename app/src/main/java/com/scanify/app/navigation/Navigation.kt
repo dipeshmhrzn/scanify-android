@@ -22,10 +22,12 @@ import com.scanify.app.presentation.onboarding.OnboardingScreen
 import com.scanify.app.presentation.search.SearchScreen
 import com.scanify.app.presentation.setting.SettingScreen
 import com.scanify.app.presentation.template.TemplateScreen
+import com.scanify.app.presentation.util.UpdateManager
 
 @Composable
 fun Navigation(
     isCompleted: Boolean,
+    updateManager: UpdateManager,
     onOnboardingFinished: () -> Unit
 ) {
     val navController = rememberNavController()
@@ -56,7 +58,8 @@ fun Navigation(
         navController = navController,
         selectedTab = selectedTab,
         showBottomBar = showBottomBar,
-        showFAB = showFAB
+        showFAB = showFAB,
+        updateManager = updateManager
     ) {
         NavHost(
             navController = navController,
@@ -123,6 +126,4 @@ fun Navigation(
             }
         }
     }
-
-
 }

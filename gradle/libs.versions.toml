@@ -1,5 +1,7 @@
 [versions]
 agp = "9.2.1"
+appUpdate = "2.1.0"
+appUpdateKtx = "2.1.0"
 browser = "1.10.0"
 coreKtx = "1.18.0"
 coreSplashscreen = "1.0.1"
@@ -29,6 +31,8 @@ androidx-browser = { module = "androidx.browser:browser", version.ref = "browser
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
+app-update = { module = "com.google.android.play:app-update", version.ref = "appUpdate" }
+app-update-ktx = { module = "com.google.android.play:app-update-ktx", version.ref = "appUpdateKtx" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilCompose" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coilNetworkOkhttp" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }

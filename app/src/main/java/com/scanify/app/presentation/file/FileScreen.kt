@@ -11,7 +11,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -41,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -220,14 +220,14 @@ fun FileScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(horizontal = 16.dp),
-            contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp),
+                .background(MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item {
+            item(contentType = "import_cards") {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     QuickImportActionCard(
@@ -265,22 +265,24 @@ fun FileScreen(
 
             when (val state = uiState) {
                 is FileUiState.Loading -> {
-                    item {
+                    item(contentType = "loading") {
                         Spacer(modifier = Modifier.height(50.dp))
                         Box(
                             modifier = Modifier
-                                .fillMaxWidth(),
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
                             contentAlignment = Alignment.Center
                         ) { LoadingIndicator() }
                     }
                 }
 
                 is FileUiState.Empty -> {
-                    item {
+                    item(contentType = "empty") {
                         Spacer(modifier = Modifier.height(150.dp))
                         Box(
                             modifier = Modifier
-                                .fillMaxWidth(),
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             NoFilesScreen(
@@ -293,75 +295,18 @@ fun FileScreen(
 
                 is FileUiState.Success -> {
 
-                    stickyHeader {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(MaterialTheme.colorScheme.background)
-                                .padding(vertical = 16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            LazyRow(
-                                modifier = Modifier.weight(1f),
-                                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                items(fileCategories) { category ->
-                                    val isSelected = category == selectedCategory
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(100.dp))
-                                            .background(
-                                                color = if (isSelected) MaterialTheme.colorScheme.primary
-                                                else MaterialTheme.colorScheme.surfaceVariant
-                                            )
-                                            .border(
-                                                width = 1.dp,
-                                                color = if (isSelected) MaterialTheme.colorScheme.primary
-                                                else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                                                shape = RoundedCornerShape(100.dp)
-                                            )
-                                            .clickable { selectedCategory = category }
-                                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                                        contentAlignment = Alignment.Center) {
-                                        Text(
-                                            text = category,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary
-                                            else MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-                            }
-
-                            Row(
-                                modifier = Modifier.padding(end = 16.dp, start = 8.dp),
-                                horizontalArrangement = Arrangement.spacedBy(14.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.GridView,
-                                    contentDescription = "Switch to Grid Layout",
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .clickable { isGridView = true },
-                                    tint = if (isGridView) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-                                )
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ViewList,
-                                    contentDescription = "Switch to List Layout",
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .clickable { isGridView = false },
-                                    tint = if (!isGridView) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-                                )
-                            }
-                        }
+                    stickyHeader(contentType = "sticky_header") {
+                        CategoryHeader(
+                            fileCategories = fileCategories,
+                            selectedCategory = selectedCategory,
+                            isGridView = isGridView,
+                            onCategorySelected = { selectedCategory = it },
+                            onLayoutToggled = { isGridView = it }
+                        )
                     }
 
                     if (filteredDocs.isEmpty()) {
-                        item {
+                        item(contentType = "category_empty") {
                             Spacer(modifier = Modifier.height(150.dp))
                             Box(
                                 modifier = Modifier
@@ -370,16 +315,18 @@ fun FileScreen(
                             ) {
                                 NoFilesScreen(text = "No files found in category : \"$selectedCategory\"")
                             }
-
                         }
                     } else {
                         if (isGridView) {
                             items(
                                 items = chunkedDocs,
-                                key = { rowDocs -> rowDocs.first().id }
+                                key = { rowDocs -> rowDocs.joinToString("_") { it.id.toString() } },
+                                contentType = { "grid_row" }
                             ) { rowDocs ->
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp),
                                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
                                     rowDocs.forEach { doc ->
@@ -396,10 +343,14 @@ fun FileScreen(
                                 }
                             }
                         } else {
-                            items(filteredDocs, key = { it.id }) { doc ->
+                            items(
+                                filteredDocs,
+                                key = { it.id },
+                                contentType = { "list_row" }) { doc ->
                                 ListFileCard(
                                     document = doc,
                                     onClick = onCardClick,
+                                    modifier = Modifier.padding(horizontal = 16.dp),
                                     onMoreOptionsClick = onMoreOptionsClick
                                 )
                             }
@@ -427,8 +378,6 @@ fun FileScreen(
                 }
             }
         }
-
-
 
         selectedDocForOptions?.let { document ->
             MoreOptionsBottomSheet(
@@ -480,6 +429,82 @@ fun FileScreen(
                     viewModel.deleteDocument(document)
                     docToDelete = null
                 }
+            )
+        }
+    }
+}
+
+
+@Composable
+private fun CategoryHeader(
+    fileCategories: List<String>,
+    selectedCategory: String,
+    isGridView: Boolean,
+    onCategorySelected: (String) -> Unit,
+    onLayoutToggled: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(vertical = 12.dp, horizontal = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        LazyRow(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            items(fileCategories, key = { it }) { category ->
+                val isSelected = category == selectedCategory
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(100.dp))
+                        .background(
+                            color = if (isSelected) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.surfaceVariant
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = if (isSelected) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                            shape = RoundedCornerShape(100.dp)
+                        )
+                        .clickable { onCategorySelected(category) }
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = category,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                        else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        Row(
+            modifier = Modifier.padding(end = 16.dp, start = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.GridView,
+                contentDescription = "Switch to Grid Layout",
+                modifier = Modifier
+                    .size(24.dp)
+                    .clickable { onLayoutToggled(true) },
+                tint = if (isGridView) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+            )
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ViewList,
+                contentDescription = "Switch to List Layout",
+                modifier = Modifier
+                    .size(24.dp)
+                    .clickable { onLayoutToggled(false) },
+                tint = if (!isGridView) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
             )
         }
     }
