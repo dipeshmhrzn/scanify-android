@@ -17,7 +17,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.scanify.app"
+        applicationId = "com.scanifylabs.scanner"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
@@ -34,7 +34,6 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {

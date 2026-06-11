@@ -34,6 +34,10 @@ fun DocumentThumbnail(
 ) {
     val context = LocalContext.current
 
+    val density = context.resources.displayMetrics.density
+
+    val targetSizePx = remember(density) { (240 * density).toInt() }
+
     val fileExtension = remember(document.fileType) { document.fileType.uppercase() }
     val isPdf = fileExtension == "PDF"
     val isImage = fileExtension in listOf("JPG", "JPEG", "PNG", "WEBP")
@@ -53,23 +57,24 @@ fun DocumentThumbnail(
     ) {
         if (isPdf || isImage) {
             val imageModel = remember(document.filePath) {
+
+                val file = File(document.filePath)
+                val lastMod = if (file.exists()) file.lastModified() else 0L
+
                 ImageRequest.Builder(context)
                     .data(
                         if (isPdf) {
                             DocumentPageRequest(
                                 filePath = document.filePath,
                                 pageIndex = 0,
-                                lastModified = 0L
-                            )
+                                lastModified = lastMod                          )
                         } else {
                             File(document.filePath)
                         }
                     )
-                    .memoryCacheKey("${document.filePath}_thumb")
-                    .diskCacheKey("${document.filePath}_thumb")
+                    .size(Size(targetSizePx, targetSizePx))
+                    .precision(Precision.INEXACT)
                     .crossfade(true)
-                    .size(Size(200, 200))
-                    .precision(Precision.EXACT)
                     .build()
             }
 

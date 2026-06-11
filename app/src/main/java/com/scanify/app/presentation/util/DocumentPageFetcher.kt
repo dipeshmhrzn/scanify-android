@@ -27,7 +27,7 @@ data class DocumentPageRequest(
 
 class DocumentPageKeyer : Keyer<DocumentPageRequest> {
     override fun key(data: DocumentPageRequest, options: Options): String {
-        return "pdf_thumb:${data.filePath}_page:${data.pageIndex}_mod:${data.lastModified}"
+        return "pdf_thumb:${data.filePath}_page:${data.pageIndex}_mod:${data.lastModified}_size:${options.size}"
     }
 }
 
