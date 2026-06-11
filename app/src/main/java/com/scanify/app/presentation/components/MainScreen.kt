@@ -72,6 +72,11 @@ fun MainScreen(
     content: @Composable () -> Unit
 ) {
 
+
+    DoubleBackToExit(
+        enabled = selectedTab == "Home"
+    )
+
     val context = LocalContext.current
     var isOptimizing by remember { mutableStateOf(false) }
 
