@@ -58,6 +58,7 @@ import com.scanify.app.domain.model.InAppUpdateState
 import com.scanify.app.navigation.Routes
 import com.scanify.app.presentation.util.UpdateManager
 import com.scanify.app.presentation.util.rememberDocumentScanner
+import com.scanify.app.presentation.viewmodels.FileNavigationEvent
 import com.scanify.app.presentation.viewmodels.FileViewModel
 import com.scanify.app.ui.theme.BrandGradient
 
@@ -93,6 +94,23 @@ fun MainScreen(
                 "Update failed. Retrying in background later.",
                 Toast.LENGTH_LONG
             ).show()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.navigationEvent.collect { event ->
+            when (event) {
+                is FileNavigationEvent.NavigateToPreview -> {
+                    navController.navigate(Routes.PreviewScreen(id = event.documentId))
+                }
+                is FileNavigationEvent.ShowError -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                }
+                is FileNavigationEvent.ShowMessage -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
+                else -> { /* MainScreen doesn't need to handle file sharing/opening */ }
+            }
         }
     }
 

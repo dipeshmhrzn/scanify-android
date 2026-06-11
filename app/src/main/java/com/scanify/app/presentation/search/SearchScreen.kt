@@ -180,7 +180,7 @@ fun SearchScreen(
         topBar = {
             Box(
                 modifier = Modifier
-                    .padding(bottom = 16.dp)
+                    .padding(vertical = 12.dp)
             ) {
                 SearchBar(
                     query = searchQuery,
