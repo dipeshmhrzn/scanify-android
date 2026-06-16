@@ -1,4 +1,4 @@
-package com.scanify.app.presentation.lens
+package com.scanify.app.presentation.viewmodels
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -8,11 +8,14 @@ import android.net.Uri
 import android.os.ParcelFileDescriptor
 import androidx.compose.ui.geometry.Size
 import androidx.core.graphics.createBitmap
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.scanify.app.presentation.lens.LensTextElement
+import com.scanify.app.presentation.lens.LensUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -25,7 +28,6 @@ import java.io.File
 import java.util.UUID
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
-import androidx.core.net.toUri
 
 @HiltViewModel
 class LensViewModel @Inject constructor() : ViewModel() {
@@ -108,7 +110,9 @@ class LensViewModel @Inject constructor() : ViewModel() {
     private suspend fun processImageSource(context: Context, filePath: String) =
         withContext(Dispatchers.IO) {
             val uri =
-                if (filePath.startsWith("content://") || filePath.startsWith("file://")) filePath.toUri() else Uri.fromFile(File(filePath))
+                if (filePath.startsWith("content://") || filePath.startsWith("file://")) filePath.toUri() else Uri.fromFile(
+                    File(filePath)
+                )
             val intrinsicSize = context.contentResolver.openInputStream(uri).use { stream ->
                 val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
                 BitmapFactory.decodeStream(stream, null, options)

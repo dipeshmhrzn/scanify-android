@@ -9,11 +9,15 @@ import androidx.navigation.toRoute
 import com.scanify.app.domain.model.Document
 import com.scanify.app.domain.usecases.DocumentUseCases
 import com.scanify.app.navigation.Routes
-import com.scanify.app.presentation.util.enforceMinimumDelay
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
@@ -38,70 +42,58 @@ class PreviewViewModel @Inject constructor(
     private val previewRoute = savedStateHandle.toRoute<Routes.PreviewScreen>()
     private val documentId: Long = previewRoute.id
 
-    private val _uiState = MutableStateFlow<PreviewUiState>(PreviewUiState.Loading)
-    val uiState = _uiState.asStateFlow()
+    private val _isUpdating = MutableStateFlow(false)
 
-    init {
-        loadDocumentState(isInitialLoad = true)
-    }
+    val uiState: StateFlow<PreviewUiState> = documentUseCases.getDocuments()
+        .map { documents ->
+            val document = documents.find { it.id == documentId }
 
-    private fun loadDocumentState(isInitialLoad: Boolean = false) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val startTime = System.currentTimeMillis()
-
-            if (isInitialLoad) {
-                _uiState.value = PreviewUiState.Loading
-            } else {
-                (_uiState.value as? PreviewUiState.Success)?.let { currentSuccess ->
-                    _uiState.value = currentSuccess.copy(isUpdating = true)
-                }
-            }
-
-            val document = documentUseCases.getDocumentById(documentId)
             if (document == null) {
-                if (isInitialLoad) enforceMinimumDelay(startTime)
-                _uiState.value = PreviewUiState.Error
-                return@launch
-            }
-
-            val file = File(document.filePath)
-            val lastModified = if (file.exists()) file.lastModified() else 0L
-
-            // Calculate total pages quickly without rendering the images
-            val pageCount = if (document.fileType.uppercase() == "PDF" && file.exists()) {
-                var count = 0
-                try {
-                    ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY).use { pfd ->
-                        PdfRenderer(pfd).use { renderer -> count = renderer.pageCount }
-                    }
-                } catch (e: Exception) { e.printStackTrace() }
-                count
+                PreviewUiState.Error
             } else {
-                1 // Images (JPG/PNG) act as a 1-page document
+                val file = File(document.filePath)
+                val lastModified = if (file.exists()) file.lastModified() else 0L
+
+                val pageCount = if (document.fileType.uppercase() == "PDF" && file.exists()) {
+                    var count = 0
+                    try {
+                        ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY).use { pfd ->
+                            PdfRenderer(pfd).use { renderer -> count = renderer.pageCount }
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                    count
+                } else {
+                    1
+                }
+
+                PreviewUiState.Success(
+                    document = document,
+                    pageCount = pageCount,
+                    lastModified = lastModified,
+                    isUpdating = _isUpdating.value
+                )
             }
-
-            if (isInitialLoad) enforceMinimumDelay(startTime)
-
-            _uiState.value = PreviewUiState.Success(
-                document = document,
-                pageCount = pageCount,
-                lastModified = lastModified,
-                isUpdating = false
-            )
         }
-    }
-
+        .combine(_isUpdating) { state, updating ->
+            if (state is PreviewUiState.Success) state.copy(isUpdating = updating) else state
+        }
+        .flowOn(Dispatchers.IO)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = PreviewUiState.Loading
+        )
     fun appendScannedImages(imageUris: List<String>) {
         viewModelScope.launch(Dispatchers.IO) {
-            (_uiState.value as? PreviewUiState.Success)?.let { currentSuccess ->
-                _uiState.value = currentSuccess.copy(isUpdating = true)
-            } ?: run {
-                _uiState.value = PreviewUiState.Loading
-            }
-
+            _isUpdating.value = true
             documentUseCases.appendImagesToDocument(documentId, imageUris)
-                .onSuccess { loadDocumentState(isInitialLoad = false) }
-                .onFailure { _uiState.value = PreviewUiState.Error }
+                .onFailure {
+                    _isUpdating.value = false
+                }
+            _isUpdating.value = false
         }
     }
+
 }
