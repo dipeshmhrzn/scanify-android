@@ -85,6 +85,8 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
 
     implementation(libs.play.services.mlkit.document.scanner)
+    implementation(libs.play.services.mlkit.text.recognition)
+    implementation(libs.kotlinx.coroutines.play.services)
 
     implementation(libs.androidx.browser)
 
