@@ -100,7 +100,6 @@ class LensViewModel @Inject constructor() : ViewModel() {
                     }
                 }
             } finally {
-                // CRITICAL: Manually recycle the bitmap once processing is done to avoid OOMs
                 bitmap?.recycle()
             }
 
@@ -119,7 +118,6 @@ class LensViewModel @Inject constructor() : ViewModel() {
         }
 
     private suspend fun executeOcrPipeline(image: InputImage, dimensionSize: Size) {
-        // Use await() to suspend until ML Kit finishes, tying it to the Coroutine lifecycle
         val visionText = recognizer.process(image).await()
 
         val elements = visionText.textBlocks.mapNotNull { block ->

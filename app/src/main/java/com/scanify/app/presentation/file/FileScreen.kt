@@ -40,7 +40,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -266,10 +265,10 @@ fun FileScreen(
             when (val state = uiState) {
                 is FileUiState.Loading -> {
                     item(contentType = "loading") {
-                        Spacer(modifier = Modifier.height(50.dp))
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .fillParentMaxHeight(0.8f)
                                 .padding(horizontal = 16.dp),
                             contentAlignment = Alignment.Center
                         ) { LoadingIndicator() }
@@ -278,11 +277,11 @@ fun FileScreen(
 
                 is FileUiState.Empty -> {
                     item(contentType = "empty") {
-                        Spacer(modifier = Modifier.height(150.dp))
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
+                                .fillParentMaxHeight(0.7f)
+                                .padding(16.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             NoFilesScreen(
@@ -307,10 +306,10 @@ fun FileScreen(
 
                     if (filteredDocs.isEmpty()) {
                         item(contentType = "category_empty") {
-                            Spacer(modifier = Modifier.height(150.dp))
                             Box(
                                 modifier = Modifier
-                                    .fillMaxWidth(),
+                                    .fillMaxSize()
+                                    .padding(16.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 NoFilesScreen(text = "No files found in category : \"$selectedCategory\"")
@@ -342,6 +341,9 @@ fun FileScreen(
                                     }
                                 }
                             }
+                            item {
+                                Spacer(modifier = Modifier.height(12.dp))
+                            }
                         } else {
                             items(
                                 filteredDocs,
@@ -353,6 +355,9 @@ fun FileScreen(
                                     modifier = Modifier.padding(horizontal = 16.dp),
                                     onMoreOptionsClick = onMoreOptionsClick
                                 )
+                            }
+                            item {
+                                Spacer(modifier = Modifier.height(12.dp))
                             }
                         }
                     }

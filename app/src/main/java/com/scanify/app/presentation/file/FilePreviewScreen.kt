@@ -3,6 +3,7 @@ package com.scanify.app.presentation.file
 import android.content.ClipData
 import android.content.Intent
 import android.net.Uri
+import android.widget.Space
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -18,11 +19,13 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -86,6 +89,7 @@ import com.scanify.app.presentation.lens.LensViewModel
 import com.scanify.app.presentation.util.rememberDocumentScanner
 import com.scanify.app.presentation.viewmodels.PreviewUiState
 import com.scanify.app.presentation.viewmodels.PreviewViewModel
+import com.scanify.app.ui.theme.BrandGradient
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -128,6 +132,7 @@ fun PreviewScreen(
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.titleLarge
                     )
+                    Spacer(modifier = Modifier.width(16.dp))
                 },
                 navigationIcon = {
                     IconButton(
@@ -211,16 +216,15 @@ fun PreviewScreen(
                             lazyListState = documentListState
                         )
                         if (state.isUpdating) LinearProgressIndicator(
-                            Modifier
+                            modifier = Modifier
                                 .fillMaxWidth()
-                                .align(Alignment.TopCenter)
+                                .align(Alignment.TopCenter),
+                            color = MaterialTheme.colorScheme.primary
                         )
                     } else {
-                        // Implement Pager to allow scrolling through all pages in Lens Mode
                         val pagerState = rememberPagerState(
                             initialPage = capturedActivePageIndex, pageCount = { state.pageCount })
 
-                        // Automatically run OCR whenever the user stops scrolling on a new page
                         LaunchedEffect(pagerState.settledPage) {
                             lensViewModel.analyzeDocumentSource(
                                 context,
@@ -239,7 +243,6 @@ fun PreviewScreen(
                                 )
                             } else java.io.File(state.document.filePath)
 
-                            // Only render the interactive workspace on the actively focused page
                             if (page == pagerState.settledPage) {
                                 when (val lens = lensState) {
                                     is LensUiState.Analyzing -> Box(
@@ -341,9 +344,8 @@ fun LensInteractiveWorkspace(
         elements.associateWith { mapper.buildPerspectivePath(it.cornerPoints) }
     }
 
-    // Your Brand Gradient
     val brandGradient = remember {
-        Brush.linearGradient(colors = listOf(Color(0xFF2196F3), Color(0xFF9C27B0)))
+        Brush.linearGradient(BrandGradient)
     }
 
     Box(
@@ -370,7 +372,6 @@ fun LensInteractiveWorkspace(
                 drawRect(Color.Black.copy(alpha = scrimAlpha))
 
                 elements.forEach { item ->
-                    // Retrieve pre-computed path instead of building it on every frame
                     val path = precomputedPaths[item] ?: return@forEach
                     val isSelected = item == selectedElement
 
@@ -378,7 +379,8 @@ fun LensInteractiveWorkspace(
                         drawPath(path, colorScheme.primary.copy(alpha = 0.25f))
                         drawPath(path, brandGradient, style = Stroke(1.5.dp.toPx()))
                     } else {
-                        val idleHighlight = if (isDark) Color.Black.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.5f)
+                        val idleHighlight =
+                            if (isDark) Color.Black.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.5f)
                         drawPath(path, idleHighlight)
                     }
                 }
@@ -392,9 +394,8 @@ fun LensInteractiveWorkspace(
             selectedElement?.let { item ->
                 val rect = mapper.mapRect(item.rawBoundingBox)
 
-                // Convert DP to true Pixels to guarantee the popup never overlaps the text box
                 val yOffsetPx = with(density) { 68.dp.toPx() }.toInt()
-                // Center the popup horizontally relative to the selected text block
+
                 val popupWidthPx = with(density) { 200.dp.toPx() }.toInt()
 
                 Popup(
@@ -405,7 +406,7 @@ fun LensInteractiveWorkspace(
                     ),
                     properties = PopupProperties(focusable = false, dismissOnClickOutside = true),
                     onDismissRequest = { selectedElement = null }) {
-                    // Fully themed popup using ScanifyTheme colors
+
                     Surface(
                         shape = RoundedCornerShape(50),
                         color = colorScheme.surface,
@@ -414,9 +415,9 @@ fun LensInteractiveWorkspace(
                         shadowElevation = 8.dp
                     ) {
                         Row(
-                            Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+                            Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(24.dp)
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             Row(
                                 modifier = Modifier.clickable {
@@ -425,7 +426,7 @@ fun LensInteractiveWorkspace(
                                     )
                                 },
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 Icon(Icons.Rounded.ContentCopy, "Copy", Modifier.size(18.dp))
                                 Text("Copy", style = MaterialTheme.typography.labelLarge)
@@ -438,7 +439,7 @@ fun LensInteractiveWorkspace(
                                     )
                                 },
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 Icon(Icons.Rounded.Search, "Search", Modifier.size(18.dp))
                                 Text("Search", style = MaterialTheme.typography.labelLarge)

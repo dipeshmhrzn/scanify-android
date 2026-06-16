@@ -180,38 +180,38 @@ fun HomeScreen(
         }
     }
     Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            when (val state = uiState) {
-                is FileUiState.Loading -> {
-                    item {
-                        Spacer(modifier = Modifier.height(50.dp))
+        when (val state = uiState) {
+            is FileUiState.Loading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) { LoadingIndicator() }
+            }
 
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            contentAlignment = Alignment.Center
-                        ) { LoadingIndicator() }
-                    }
+            is FileUiState.Empty -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    NoFilesScreen(
+                        "No recent files found.",
+                        onScanNowClick = launchScanner
+                    )
                 }
+            }
 
-                is FileUiState.Empty -> {
-                    item {
-                        Spacer(modifier = Modifier.height(150.dp))
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            contentAlignment = Alignment.Center
-                        ) { NoFilesScreen("No recent files found.", onScanNowClick = launchScanner) }
-                    }
-                }
 
-                is FileUiState.Success -> {
+            is FileUiState.Success -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
                     item {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
