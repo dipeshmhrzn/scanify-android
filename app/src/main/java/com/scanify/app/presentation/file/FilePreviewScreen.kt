@@ -64,12 +64,12 @@ import com.scanify.app.presentation.components.LoadingIndicator
 import com.scanify.app.presentation.components.RenameDocumentDialog
 import com.scanify.app.presentation.components.filecomponents.preview.DocumentPageList
 import com.scanify.app.presentation.file.components.PreviewBottomBar
-import com.scanify.app.presentation.lens.LensUiState
-import com.scanify.app.presentation.viewmodels.LensViewModel
 import com.scanify.app.presentation.lens.LensInteractiveWorkspace
+import com.scanify.app.presentation.lens.LensUiState
 import com.scanify.app.presentation.util.rememberDocumentScanner
 import com.scanify.app.presentation.viewmodels.FileNavigationEvent
 import com.scanify.app.presentation.viewmodels.FileViewModel
+import com.scanify.app.presentation.viewmodels.LensViewModel
 import com.scanify.app.presentation.viewmodels.PreviewUiState
 import com.scanify.app.presentation.viewmodels.PreviewViewModel
 import kotlinx.coroutines.Dispatchers

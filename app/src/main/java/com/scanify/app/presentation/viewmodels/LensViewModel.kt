@@ -9,6 +9,7 @@ import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import androidx.compose.ui.geometry.Size
+import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -29,7 +30,6 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.UUID
 import javax.inject.Inject
-import androidx.core.graphics.createBitmap
 
 @HiltViewModel
 class LensViewModel @Inject constructor() : ViewModel() {
@@ -89,7 +89,7 @@ class LensViewModel @Inject constructor() : ViewModel() {
 
                             bitmap = createBitmap(bitmapWidth, bitmapHeight)
 
-                            bitmap?.let {
+                            bitmap.let {
                                 val canvas = Canvas(it)
                                 canvas.drawColor(Color.WHITE)
                             }
@@ -102,7 +102,7 @@ class LensViewModel @Inject constructor() : ViewModel() {
                             )
 
                             executeOcrPipeline(
-                                InputImage.fromBitmap(bitmap!!, 0),
+                                InputImage.fromBitmap(bitmap, 0),
                                 Size(bitmapWidth.toFloat(), bitmapHeight.toFloat())
                             )
                         }
