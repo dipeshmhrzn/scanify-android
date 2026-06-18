@@ -3,11 +3,12 @@ package com.scanify.app.presentation.viewmodels
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import androidx.compose.ui.geometry.Size
-import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,6 +18,7 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.scanify.app.presentation.lens.LensTextElement
 import com.scanify.app.presentation.lens.LensUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,7 +29,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.UUID
 import javax.inject.Inject
-import kotlin.coroutines.cancellation.CancellationException
+import androidx.core.graphics.createBitmap
 
 @HiltViewModel
 class LensViewModel @Inject constructor() : ViewModel() {
@@ -45,7 +47,6 @@ class LensViewModel @Inject constructor() : ViewModel() {
         fileType: String,
         targetPageIndex: Int = 0
     ) {
-
         analysisJob?.cancel()
 
         analysisJob = viewModelScope.launch {
@@ -82,11 +83,17 @@ class LensViewModel @Inject constructor() : ViewModel() {
                             return@use
                         }
                         renderer.openPage(pageIndex).use { page ->
-                            val scaleFactor = 2f
+                            val scaleFactor = 2.5f
                             val bitmapWidth = (page.width * scaleFactor).toInt()
                             val bitmapHeight = (page.height * scaleFactor).toInt()
 
                             bitmap = createBitmap(bitmapWidth, bitmapHeight)
+
+                            bitmap?.let {
+                                val canvas = Canvas(it)
+                                canvas.drawColor(Color.WHITE)
+                            }
+
                             page.render(
                                 bitmap,
                                 null,
@@ -95,24 +102,27 @@ class LensViewModel @Inject constructor() : ViewModel() {
                             )
 
                             executeOcrPipeline(
-                                InputImage.fromBitmap(bitmap, 0),
+                                InputImage.fromBitmap(bitmap!!, 0),
                                 Size(bitmapWidth.toFloat(), bitmapHeight.toFloat())
                             )
                         }
                     }
                 }
+            } catch (e: Exception) {
+                _lensState.value = LensUiState.Error(e.localizedMessage ?: "PDF processing failed.")
             } finally {
                 bitmap?.recycle()
             }
-
         }
 
     private suspend fun processImageSource(context: Context, filePath: String) =
         withContext(Dispatchers.IO) {
-            val uri =
-                if (filePath.startsWith("content://") || filePath.startsWith("file://")) filePath.toUri() else Uri.fromFile(
-                    File(filePath)
-                )
+            val uri = if (filePath.startsWith("content://") || filePath.startsWith("file://")) {
+                filePath.toUri()
+            } else {
+                Uri.fromFile(File(filePath))
+            }
+
             val intrinsicSize = context.contentResolver.openInputStream(uri).use { stream ->
                 val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
                 BitmapFactory.decodeStream(stream, null, options)
@@ -145,7 +155,7 @@ class LensViewModel @Inject constructor() : ViewModel() {
     }
 
     override fun onCleared() {
-        super.onCleared();
+        super.onCleared()
         recognizer.close()
     }
 }

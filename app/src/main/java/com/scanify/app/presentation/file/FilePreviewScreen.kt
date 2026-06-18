@@ -214,7 +214,7 @@ fun PreviewScreen(
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Back",
-                                modifier = Modifier.size(28.dp)
+                                modifier = Modifier.size(30.dp)
                             )
                         }
                     },
@@ -242,8 +242,7 @@ fun PreviewScreen(
                                     painter = painterResource(id = R.drawable.textrecognition),
                                     contentDescription = "Extract Text",
                                     tint = if (isLensActiveMode) MaterialTheme.colorScheme.primary else LocalContentColor.current,
-                                    modifier = Modifier.size(28.dp)
-
+                                    modifier = Modifier.size(30.dp)
                                 )
                             }
                         }
@@ -330,72 +329,81 @@ fun PreviewScreen(
                             }
 
                             VerticalPager(
-                                state = pagerState, modifier = Modifier.fillMaxSize()
+                                state = pagerState,
+                                modifier = Modifier.fillMaxSize()
                             ) { page ->
-                                val modelData: Any =
-                                    if (state.document.fileType.uppercase() == "PDF") {
-                                        com.scanify.app.presentation.util.DocumentPageRequest(
-                                            state.document.filePath, page, state.lastModified
-                                        )
-                                    } else java.io.File(state.document.filePath)
-
-                                if (page == pagerState.settledPage) {
-                                    when (val lens = lensState) {
-                                        is LensUiState.Analyzing -> Box(
-                                            Modifier.fillMaxSize(),
-                                            contentAlignment = Alignment.Center
-                                        ) { LoadingIndicator() }
-
-                                        is LensUiState.Success -> {
-                                            LensInteractiveWorkspace(
-                                                imageModel = modelData,
-                                                elements = lens.elements,
-                                                intrinsicImageSize = lens.imageSize,
-                                                onActionTriggered = { action, text ->
-                                                    if (action == "COPY") {
-                                                        scope.launch {
-                                                            val clipData = ClipData.newPlainText(
-                                                                "Extracted Text", text
-                                                            )
-                                                            clipboard.setClipEntry(clipData.toClipEntry())
-                                                        }
-                                                        Toast.makeText(
-                                                            context, "Copied", Toast.LENGTH_SHORT
-                                                        ).show()
-                                                    } else {
-                                                        context.startActivity(
-                                                            Intent(
-                                                                Intent.ACTION_VIEW,
-                                                                "https://www.google.com/search?q=${
-                                                                    Uri.encode(
-                                                                        text
-                                                                    )
-                                                                }".toUri()
-                                                            )
-                                                        )
-                                                    }
-                                                })
-                                        }
-
-                                        is LensUiState.Error -> Box(
-                                            Modifier.fillMaxSize(),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(
-                                                lens.message,
-                                                color = MaterialTheme.colorScheme.error
-                                            )
-                                        }
-
-                                        else -> {}
-                                    }
+                                val modelData: Any = if (state.document.fileType.uppercase() == "PDF") {
+                                    com.scanify.app.presentation.util.DocumentPageRequest(
+                                        state.document.filePath, page, state.lastModified
+                                    )
                                 } else {
+                                    java.io.File(state.document.filePath)
+                                }
+
+                                Box(modifier = Modifier.fillMaxSize()) {
                                     AsyncImage(
                                         model = modelData,
-                                        contentDescription = null,
+                                        contentDescription = "Document page $page Preview",
                                         modifier = Modifier.fillMaxSize(),
                                         contentScale = ContentScale.Fit
                                     )
+
+                                    if (page == pagerState.settledPage) {
+                                        when (val lens = lensState) {
+                                            is LensUiState.Analyzing -> {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .background(Color(0xFF131324).copy(alpha = 0.85f)),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    LoadingIndicator()
+                                                }
+                                            }
+
+                                            is LensUiState.Success -> {
+                                                LensInteractiveWorkspace(
+                                                    imageModel = modelData,
+                                                    elements = lens.elements,
+                                                    intrinsicImageSize = lens.imageSize,
+                                                    onActionTriggered = { action, text ->
+                                                        if (action == "COPY") {
+                                                            scope.launch {
+                                                                val clipData = ClipData.newPlainText("Extracted Text", text)
+                                                                clipboard.setClipEntry(clipData.toClipEntry())
+                                                            }
+                                                            Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
+                                                        } else {
+                                                            context.startActivity(
+                                                                Intent(
+                                                                    Intent.ACTION_VIEW,
+                                                                    "https://www.google.com/search?q=${Uri.encode(text)}".toUri()
+                                                                )
+                                                            )
+                                                        }
+                                                    }
+                                                )
+                                            }
+
+                                            is LensUiState.Error -> {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .background(Color.Black.copy(alpha = 0.4f))
+                                                        .padding(16.dp),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Text(
+                                                        text = lens.message,
+                                                        color = MaterialTheme.colorScheme.error,
+                                                        style = MaterialTheme.typography.bodyMedium
+                                                    )
+                                                }
+                                            }
+
+                                            LensUiState.Idle -> { /* Safe resting state boundary */ }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -456,7 +464,6 @@ fun PreviewScreen(
                 onConfirm = {
                     fileViewModel.deleteDocument(document)
                     docToDelete = null
-                    // Immediately exit the preview screen since the document no longer exists
                     navController.popBackStack()
                 }
             )
