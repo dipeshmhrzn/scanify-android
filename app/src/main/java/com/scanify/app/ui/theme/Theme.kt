@@ -25,7 +25,8 @@ private val LightColorScheme = lightColorScheme(
     onSurface = LightOnSurface,
     surfaceVariant = LightSurfaceVariant,
     onSurfaceVariant = LightOnSurfaceVariant,
-    outline = LightOutline
+    outline = LightOutline,
+    scrim = LightScrim
 )
 
 private val DarkColorScheme = darkColorScheme(
@@ -43,7 +44,8 @@ private val DarkColorScheme = darkColorScheme(
     onSurface = DarkOnSurface,
     surfaceVariant = DarkSurfaceVariant,
     onSurfaceVariant = DarkOnSurfaceVariant,
-    outline = DarkOutline
+    outline = DarkOutline,
+    scrim = DarkScrim
 )
 
 enum class ThemeMode { LIGHT, DARK, SYSTEM }

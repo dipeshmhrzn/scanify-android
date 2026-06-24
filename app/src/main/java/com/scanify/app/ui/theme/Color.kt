@@ -18,6 +18,7 @@ val LightOnSurface = Color(0xFF1A1C1C)
 val LightSurfaceVariant = Color(0xFFE2E2E2)
 val LightOnSurfaceVariant = Color(0xFF454652)
 val LightOutline = Color(0xFF757684)
+val LightScrim = Color(0xFF000000)
 
 // Dark Theme
 val DarkPrimary = Color(0xFFBAC3FF)
@@ -35,6 +36,7 @@ val DarkOnSurface = Color(0xFFF0F1F1)
 val DarkSurfaceVariant = Color(0xFF2D2D30)
 val DarkOnSurfaceVariant = Color(0xFFC5C5D4)
 val DarkOutline = Color(0xFF8E8E93)
+val DarkScrim = Color(0xFF0A0A0C)
 
 // Brand Gradients (For FAB & Premium features)
 val BrandGradient = listOf(Color(0xFF2196F3), Color(0xFF9C27B0))

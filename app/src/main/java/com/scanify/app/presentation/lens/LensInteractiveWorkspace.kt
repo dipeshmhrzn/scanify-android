@@ -9,7 +9,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -32,10 +31,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.input.pointer.pointerInput
@@ -59,15 +61,29 @@ fun LensInteractiveWorkspace(
     var selectedElement by remember { mutableStateOf<LensTextElement?>(null) }
 
     val density = LocalDensity.current
-    val isDark = isSystemInDarkTheme()
     val colorScheme = MaterialTheme.colorScheme
+
+    val paddingPx = with(density) { 2.5.dp.toPx() }
+    val cornerRadiusPx = with(density) { 4.dp.toPx() }
 
     val mapper = remember(viewSize, intrinsicImageSize) {
         CoordinateMappingUtils.calculateMappingMatrix(viewSize, intrinsicImageSize)
     }
 
-    val precomputedPaths = remember(elements, mapper) {
-        elements.associateWith { mapper.buildPerspectivePath(it.cornerPoints) }
+    val precomputedPaths = remember(elements, mapper, paddingPx, cornerRadiusPx) {
+        elements.associateWith { element ->
+            val mappedRect = mapper.mapRect(element.rawBoundingBox)
+            val paddedRect = mappedRect.inflate(paddingPx)
+
+            Path().apply {
+                addRoundRect(
+                    RoundRect(
+                        rect = paddedRect,
+                        cornerRadius = CornerRadius(cornerRadiusPx, cornerRadiusPx)
+                    )
+                )
+            }
+        }
     }
 
     val brandGradient = remember {
@@ -78,18 +94,18 @@ fun LensInteractiveWorkspace(
         modifier = Modifier
             .fillMaxSize()
             .onGloballyPositioned { viewSize = it.size.toSize() }
-            .pointerInput(elements, mapper) {
+            .pointerInput(elements, mapper, paddingPx) {
                 detectTapGestures { offset ->
                     selectedElement = elements.firstOrNull {
-                        mapper.mapRect(it.rawBoundingBox).contains(offset)
+                        mapper.mapRect(it.rawBoundingBox).inflate(paddingPx).contains(offset)
                     }
                 }
             }
     ) {
         Canvas(Modifier.fillMaxSize()) {
-            if (viewSize.width > 0f) {
-                val scrimAlpha = if (isDark) 0.6f else 0.2f
-                val scrimColor = Color.Black.copy(alpha = scrimAlpha)
+            if (viewSize.width > 0f && intrinsicImageSize.width > 0f) {
+
+                val scrimColor = colorScheme.scrim.copy(alpha = 0.33f)
 
                 selectedElement?.let { selectedItem ->
                     val selectedPath = precomputedPaths[selectedItem]
@@ -107,13 +123,11 @@ fun LensInteractiveWorkspace(
                 elements.forEach { item ->
                     val path = precomputedPaths[item] ?: return@forEach
                     val isSelected = item == selectedElement
-
                     if (isSelected) {
-                        drawPath(path, colorScheme.primary.copy(alpha = 0.28f))
+                        drawPath(path, colorScheme.primary.copy(alpha = 0.25f))
                         drawPath(path, brandGradient, style = Stroke(width = 2.dp.toPx()))
                     } else {
-                        val idleHighlight = if (isDark) Color.Black.copy(alpha = 0.35f) else Color.White.copy(alpha = 0.45f)
-                        drawPath(path, idleHighlight)
+                        drawPath(path, Color.White.copy(alpha = 0.35f))
                     }
                 }
             }
@@ -125,8 +139,8 @@ fun LensInteractiveWorkspace(
             exit = fadeOut() + slideOutVertically { it / 4 }
         ) {
             selectedElement?.let { item ->
-                val rect = mapper.mapRect(item.rawBoundingBox)
-                val yOffsetPx = with(density) { 44.dp.toPx() }.toInt()
+                val rect = mapper.mapRect(item.rawBoundingBox).inflate(paddingPx)
+                val yOffsetPx = with(density) { 52.dp.toPx() }.toInt()
 
                 Popup(
                     alignment = Alignment.TopStart,
@@ -142,11 +156,11 @@ fun LensInteractiveWorkspace(
                         shape = RoundedCornerShape(50),
                         color = colorScheme.surface,
                         contentColor = colorScheme.onSurface,
-                        border = BorderStroke(1.dp, colorScheme.outline.copy(alpha = 0.15f)),
-                        shadowElevation = 6.dp
+                        border = BorderStroke(1.dp, colorScheme.outline.copy(alpha = 0.2f)),
+                        shadowElevation = 8.dp
                     ) {
                         Row(
-                            Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                            Modifier.padding(horizontal = 18.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(20.dp)
                         ) {
