@@ -7,9 +7,7 @@ Designed with modern Android development paradigms, Scanify respects user privac
 ![Screenshot 2](./images/screenshot3.png)
 
 <p align="center">
-  <a href="https://play.google.com/store/apps/details?id=com.scanifylabs.scanner&pcampaignid=web_share" target="_blank">
-    <img src="./images/playstore_badge.png" alt="Get it on Play Store" height="60"/>
-  </a>
+  <a href="https://play.google.com/store/apps/details?id=com.scanifylabs.scanner&pcampaignid=web_share"><img src="./images/playstore_badge.png" alt="Get it on Play Store" height="60"/></a>
 </p>
 
 ---
