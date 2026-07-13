@@ -7,7 +7,7 @@ Designed with modern Android development paradigms, Scanify respects user privac
 ![Screenshot 2](./images/screenshot3.png)
 
 <p align="center">
-  <a href="https://play.google.com/store/apps/details?id=com.scanifylabs.scanner&pcampaignid=web_share">
+  <a href="https://play.google.com/store/apps/details?id=com.scanifylabs.scanner&pcampaignid=web_share" target="_blank">
     <img src="./images/playstore_badge.png" alt="Get it on Play Store" height="60"/>
   </a>
 </p>
@@ -64,7 +64,7 @@ Since Scanify relies entirely on native on-device APIs and platform dependencies
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/dipeshmhrzn/scanify.git](https://github.com/dipeshmhrzn/scanify.git)
+   git clone https://github.com/dipeshmhrzn/scanify-android.git
 2. Open the project in **Android Studio**.
 3. Let Gradle sync completely.
 4. Build and run the application on an Android device or emulator running Android 8.0 (API 26) or higher.
