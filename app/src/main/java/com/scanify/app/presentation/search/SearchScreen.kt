@@ -1,10 +1,7 @@
 package com.scanify.app.presentation.search
 
 import android.content.Intent
-import android.os.Build
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -45,6 +42,7 @@ import com.scanify.app.presentation.components.RenameDocumentDialog
 import com.scanify.app.presentation.components.filecomponents.cards.ListFileCard
 import com.scanify.app.presentation.components.moreoptioncomponents.MoreOptionsBottomSheet
 import com.scanify.app.presentation.util.OfficeFileOpener
+import com.scanify.app.presentation.util.rememberSaveDocumentHandler
 import com.scanify.app.presentation.viewmodels.FileNavigationEvent
 import com.scanify.app.presentation.viewmodels.FileViewModel
 import com.scanify.app.presentation.viewmodels.SearchUiState
@@ -70,7 +68,6 @@ fun SearchScreen(
     var selectedDocForOptions by remember { mutableStateOf<Document?>(null) }
     var docToRename by remember { mutableStateOf<Document?>(null) }
     var docToDelete by remember { mutableStateOf<Document?>(null) }
-    var docToExportLegacy by remember { mutableStateOf<Document?>(null) }
 
     val onCardClick = remember(fileViewModel) {
         { doc: Document ->
@@ -85,16 +82,7 @@ fun SearchScreen(
         }
     }
 
-    val exportDocumentLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("*/*")
-    ) { uri ->
-        uri?.let { safeUri ->
-            docToExportLegacy?.let { doc ->
-                fileViewModel.saveToSelectedUri(doc, safeUri)
-            }
-        }
-        docToExportLegacy = null
-    }
+    val saveDocument = rememberSaveDocumentHandler(fileViewModel)
 
     LaunchedEffect(fileViewModel.navigationEvent) {
         fileViewModel.navigationEvent.collect { event ->
@@ -263,17 +251,8 @@ fun SearchScreen(
                         selectedDocForOptions = null
                     },
                     onSaveClick = {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                            fileViewModel.autoSaveToDocuments(document)
-                            selectedDocForOptions = null
-                        } else {
-                            docToExportLegacy = document
-                            val extension = document.fileType.lowercase()
-                            val fileNameWithExtension = "${document.name}.$extension"
-
-                            exportDocumentLauncher.launch(fileNameWithExtension)
-                            selectedDocForOptions = null
-                        }
+                        saveDocument(document)
+                        selectedDocForOptions = null
                     },
                     onDeleteClick = {
                         docToDelete = document

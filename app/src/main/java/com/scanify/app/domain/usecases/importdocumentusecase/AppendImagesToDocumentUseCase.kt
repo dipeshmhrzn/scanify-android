@@ -2,24 +2,20 @@ package com.scanify.app.domain.usecases.importdocumentusecase
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.pdf.PdfDocument
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
 import androidx.core.graphics.createBitmap
-import androidx.core.graphics.scale
 import com.scanify.app.domain.model.Document
 import com.scanify.app.domain.repository.DocumentRepository
 import com.scanify.app.domain.repository.FileManager
 import com.scanify.app.domain.repository.UriResolver
+import com.scanify.app.presentation.util.ImageOptimizer
+import com.scanify.app.presentation.util.JpegPdfWriter
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
 import java.io.IOException
 import javax.inject.Inject
 
@@ -33,7 +29,7 @@ class AppendImagesToDocumentUseCase @Inject constructor(
         withContext(Dispatchers.IO) {
             var pfd: ParcelFileDescriptor? = null
             var pdfRenderer: PdfRenderer? = null
-            val pdfDocument = PdfDocument()
+            val tempJpegDir = File(context.cacheDir, "append_pages_$documentId").apply { mkdirs() }
 
             try {
                 val existingDoc: Document = documentRepository.getDocumentById(documentId)
@@ -46,19 +42,13 @@ class AppendImagesToDocumentUseCase @Inject constructor(
                 val fileTarget = File(existingDoc.filePath)
                 if (!fileTarget.exists()) throw IOException("Physical source file path does not exist.")
 
-                var pageIndexCounter = 0
-                val maxPageDim = 1600
-
-                val pdfPaint = Paint().apply {
-                    isAntiAlias = true
-                    isFilterBitmap = true
-                }
+                val maxPageDim = ImageOptimizer.MAX_PAGE_DIMEN
+                val pageJpegFiles = mutableListOf<File>()
 
                 pfd = ParcelFileDescriptor.open(fileTarget, ParcelFileDescriptor.MODE_READ_ONLY)
                 pdfRenderer = PdfRenderer(pfd)
 
-                // 1. RE-RENDER EXISTING PAGES AT HIGHER RESOLUTION
-                for (i: Int in 0 until pdfRenderer.pageCount) {
+                for (i in 0 until pdfRenderer.pageCount) {
                     pdfRenderer.openPage(i).use { page ->
                         val ratio = page.width.toFloat() / page.height.toFloat()
                         val (targetW, targetH) = if (ratio > 1) {
@@ -67,76 +57,40 @@ class AppendImagesToDocumentUseCase @Inject constructor(
                             (maxPageDim * ratio).toInt() to maxPageDim
                         }
 
-                        val bitmap = createBitmap(targetW, targetH)
+                        val bitmap = createBitmap(targetW, targetH, Bitmap.Config.ARGB_8888)
                         bitmap.eraseColor(Color.WHITE)
-
                         page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
 
-                        val pageInfo: PdfDocument.PageInfo = PdfDocument.PageInfo.Builder(
-                            targetW, targetH, ++pageIndexCounter
-                        ).create()
-                        val newPage: PdfDocument.Page = pdfDocument.startPage(pageInfo)
-
-                        newPage.canvas.drawBitmap(bitmap, 0f, 0f, pdfPaint)
-                        pdfDocument.finishPage(newPage)
+                        val jpegFile = File(tempJpegDir, "existing_${i}.jpg")
+                        jpegFile.outputStream().use { out ->
+                            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+                        }
                         bitmap.recycle()
+                        pageJpegFiles.add(jpegFile)
                     }
                 }
                 pdfRenderer.close()
                 pfd.close()
+                pdfRenderer = null
+                pfd = null
 
-                // 2. APPEND NEW IMAGES USING STRIPPED PATH RESOLUTION
-                additionalImageUris.forEach { uriString: String ->
+                additionalImageUris.forEach { uriString ->
                     val resolvedData = uriResolver.resolveUri(uriString) ?: return@forEach
-                    val (_, localFilePath: String) = resolvedData // Destructures File Path String
-
-                    val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                    BitmapFactory.decodeFile(localFilePath, options) // Decodes directly from file path
-
-                    options.inSampleSize = calculateInSampleSize(options, maxPageDim, maxPageDim)
-                    options.inJustDecodeBounds = false
-                    options.inPreferredConfig = Bitmap.Config.RGB_565
-
-                    var bitmap: Bitmap = BitmapFactory.decodeFile(localFilePath, options) ?: return@forEach
-
-                    if (bitmap.width > maxPageDim || bitmap.height > maxPageDim) {
-                        val ratio = bitmap.width.toFloat() / bitmap.height.toFloat()
-                        val (targetW, targetH) = if (ratio > 1) {
-                            maxPageDim to (maxPageDim / ratio).toInt()
-                        } else {
-                            (maxPageDim * ratio).toInt() to maxPageDim
-                        }
-                        val scaledBitmap = bitmap.scale(targetW, targetH, filter = true)
-                        if (scaledBitmap != bitmap) {
-                            bitmap.recycle()
-                            bitmap = scaledBitmap
-                        }
-                    }
-
-                    val pageInfo: PdfDocument.PageInfo = PdfDocument.PageInfo.Builder(
-                        bitmap.width, bitmap.height, ++pageIndexCounter
-                    ).create()
-                    val newPage: PdfDocument.Page = pdfDocument.startPage(pageInfo)
-
-                    newPage.canvas.drawBitmap(bitmap, 0f, 0f, pdfPaint)
-                    pdfDocument.finishPage(newPage)
-                    bitmap.recycle()
+                    val (_, localFilePath) = resolvedData
+                    pageJpegFiles.add(File(localFilePath))
                 }
 
-                val tempCacheLocation = File(context.cacheDir, "append_transaction_workspace.pdf")
-                tempCacheLocation.outputStream().use { output ->
-                    pdfDocument.writeTo(output)
+                if (pageJpegFiles.isEmpty()) {
+                    throw IOException("No pages available to write.")
                 }
 
-                // FIX: Stream transaction contents cleanly to file target without reading bytes to RAM
-                FileInputStream(tempCacheLocation).use { input ->
-                    FileOutputStream(fileTarget).use { output ->
-                        input.copyTo(output)
-                    }
-                }
-                tempCacheLocation.delete()
+                val tempPdfFile = File(context.cacheDir, "append_transaction_$documentId.pdf")
+                JpegPdfWriter.write(pageJpegFiles, tempPdfFile)
 
-                val updatedMetadataInstance: Document = existingDoc.copy(
+                tempPdfFile.copyTo(fileTarget, overwrite = true)
+                tempPdfFile.delete()
+
+                val updatedMetadataInstance = existingDoc.copy(
                     fileSize = fileManager.getReadableFileSize(fileTarget)
                 )
                 documentRepository.importDocument(updatedMetadataInstance)
@@ -145,24 +99,9 @@ class AppendImagesToDocumentUseCase @Inject constructor(
             } catch (e: Exception) {
                 Result.failure(e)
             } finally {
-                pdfDocument.close()
                 try { pdfRenderer?.close() } catch (ignored: Exception) {}
                 try { pfd?.close() } catch (ignored: Exception) {}
+                tempJpegDir.deleteRecursively()
             }
         }
-
-    private fun calculateInSampleSize(options: BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
-        val height: Int = options.outHeight
-        val width: Int = options.outWidth
-        var inSampleSize = 1
-
-        if (height > reqHeight || width > reqWidth) {
-            val halfHeight: Int = height / 2
-            val halfWidth: Int = width / 2
-            while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
-                inSampleSize *= 2
-            }
-        }
-        return inSampleSize
-    }
 }

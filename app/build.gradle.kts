@@ -4,14 +4,14 @@ plugins {
 
     kotlin("plugin.serialization") version "2.3.21"
 
-    id("com.google.dagger.hilt.android") version "2.59.2"
-    id("com.google.devtools.ksp") version "2.3.7"
+    id("com.google.dagger.hilt.android") version "2.60.1"
+    id("com.google.devtools.ksp") version "2.3.10"
 }
 
 android {
     namespace = "com.scanify.app"
     compileSdk {
-        version = release(36) {
+        version = release(37) {
             minorApiLevel = 1
         }
     }
@@ -19,7 +19,7 @@ android {
     defaultConfig {
         applicationId = "com.scanifylabs.scanner"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 4
         versionName = "1.1.2"
 
@@ -37,9 +37,10 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
+
     buildFeatures {
         compose = true
         buildConfig = true
@@ -54,6 +55,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.documentfile)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))

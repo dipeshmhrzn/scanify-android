@@ -17,6 +17,9 @@ interface DocumentDao {
     @Query("UPDATE documents SET name = :newName WHERE id = :id")
     suspend fun updateDocumentName(id: Long, newName: String)
 
+    @Query("SELECT name FROM documents WHERE name = :name AND id != :excludeId LIMIT 1")
+    suspend fun findByExactName(name: String, excludeId: Long): String?
+
     @Query("SELECT * FROM documents WHERE id = :id LIMIT 1")
     suspend fun getDocumentById(id: Long): DocumentEntity?
 

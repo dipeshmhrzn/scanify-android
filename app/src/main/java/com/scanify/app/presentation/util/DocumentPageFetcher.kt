@@ -18,6 +18,7 @@ import coil3.size.pxOrElse
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 
 data class DocumentPageRequest(
     val filePath: String,
@@ -37,7 +38,8 @@ class DocumentPageFetcher(
 ) : Fetcher {
 
     companion object {
-        private val renderMutex = Mutex()
+        private val locksByPath = ConcurrentHashMap<String, Mutex>()
+        private fun lockFor(path: String): Mutex = locksByPath.getOrPut(path) { Mutex() }
     }
 
     override suspend fun fetch(): FetchResult? {
@@ -47,7 +49,7 @@ class DocumentPageFetcher(
         val targetWidth = options.size.width.pxOrElse { -1 }
         val targetHeight = options.size.height.pxOrElse { -1 }
 
-        val bitmap = renderMutex.withLock {
+        val bitmap = lockFor(data.filePath).withLock {
             renderSinglePdfPage(file, data.pageIndex, targetWidth, targetHeight)
         } ?: return null
 
@@ -80,9 +82,7 @@ class DocumentPageFetcher(
                 val finalWidth = (page.width * scale).toInt().coerceAtLeast(1)
                 val finalHeight = (page.height * scale).toInt().coerceAtLeast(1)
 
-                val config = Bitmap.Config.ARGB_8888
-
-                val bitmap = createBitmap(finalWidth, finalHeight, config)
+                val bitmap = createBitmap(finalWidth, finalHeight, Bitmap.Config.ARGB_8888)
                 val canvas = Canvas(bitmap)
                 canvas.drawColor(Color.WHITE)
 
