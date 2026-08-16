@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.scanify.app.domain.model.Document
 import com.scanify.app.domain.usecases.DocumentUseCases
+import com.scanify.app.presentation.util.JpegPdfWriter
 import com.scanify.app.presentation.util.enforceMinimumDelay
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -29,6 +30,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
 sealed interface FileUiState {
     object Loading : FileUiState
@@ -56,7 +58,7 @@ class FileViewModel @Inject constructor(
         .map { if (it.isEmpty()) FileUiState.Empty else FileUiState.Success(it) }
         .combine(
             flow {
-                delay(300)
+                delay(300.milliseconds)
                 emit(Unit)
             }
         ) { dataState, _ ->
@@ -85,6 +87,16 @@ class FileViewModel @Inject constructor(
             val startTime = System.currentTimeMillis()
             _isImporting.value = true
             documentUseCases.importMultipleFiles(uriStrings)
+                .onSuccess { summary ->
+                    if (summary.failures.isNotEmpty()) {
+                        val failedCount = summary.failures.size
+                        _navigationEvent.send(
+                            FileNavigationEvent.ShowMessage(
+                                "Imported ${summary.successfulIds.size} file(s), $failedCount failed."
+                            )
+                        )
+                    }
+                }
                 .onFailure { err ->
                     _navigationEvent.send(
                         FileNavigationEvent.ShowError(
@@ -121,30 +133,8 @@ class FileViewModel @Inject constructor(
         val trimmedName = newName.trim()
         if (trimmedName.isEmpty() || trimmedName.equals(document.name, ignoreCase = true)) return
 
-        var finalizedName = trimmedName
-
-        val currentState = uiState.value
-        if (currentState is FileUiState.Success) {
-            val existingNames = currentState.documents
-                .filter { it.id != document.id }
-                .map { it.name.lowercase() }
-                .toSet()
-
-            if (existingNames.contains(finalizedName.lowercase())) {
-                var counter = 1
-                val baseName = finalizedName.substringBeforeLast(".")
-                val extension = finalizedName.substringAfterLast(".", "")
-                val dotSuffix = if (extension.isNotEmpty()) ".$extension" else ""
-
-                do {
-                    finalizedName = "$baseName ($counter)$dotSuffix"
-                    counter++
-                } while (existingNames.contains(finalizedName.lowercase()))
-            }
-        }
-
         viewModelScope.launch {
-            documentUseCases.renameDocumentUseCase(document, finalizedName)
+            documentUseCases.renameDocumentUseCase(document, trimmedName)
         }
     }
 
@@ -262,34 +252,119 @@ class FileViewModel @Inject constructor(
         }
     }
 
-    fun handleScannedDocuments(imageUris: List<String>, pdfUri: String?) {
+    fun saveImagesToDevice(document: Document) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val startTime = System.currentTimeMillis()
+            _isSaving.value = true
+            try {
+                val sourceFile = File(document.filePath)
+                if (!sourceFile.exists()) {
+                    _navigationEvent.send(FileNavigationEvent.ShowError("Source file not found."))
+                    return@launch
+                }
+
+                val jpegPages = JpegPdfWriter.extractEmbeddedJpegs(sourceFile)
+                if (jpegPages.isEmpty()) {
+                    _navigationEvent.send(FileNavigationEvent.ShowError("No pages found to save."))
+                    return@launch
+                }
+
+                val cleanName = document.name.substringBeforeLast(".")
+                val resolver = appContext.contentResolver
+                val collectionUri = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+
+                var savedCount = 0
+                jpegPages.forEachIndexed { index, jpegBytes ->
+                    val fileName = if (jpegPages.size == 1) "$cleanName.jpg" else "${cleanName}_page${index + 1}.jpg"
+                    val contentValues = ContentValues().apply {
+                        put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                        put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+                        put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_PICTURES}/Scanify")
+                    }
+                    val targetUri = resolver.insert(collectionUri, contentValues)
+                    if (targetUri != null) {
+                        resolver.openOutputStream(targetUri)?.use { out -> out.write(jpegBytes) }
+                        savedCount++
+                    }
+                }
+
+                if (savedCount == jpegPages.size) {
+                    _navigationEvent.send(FileNavigationEvent.ShowMessage("Saved $savedCount image(s) to Pictures."))
+                } else {
+                    _navigationEvent.send(FileNavigationEvent.ShowMessage("Saved $savedCount of ${jpegPages.size} image(s)."))
+                }
+            } catch (e: Exception) {
+                _navigationEvent.send(FileNavigationEvent.ShowError("Save failed: ${e.localizedMessage}"))
+            } finally {
+                enforceMinimumDelay(startTime)
+                _isSaving.value = false
+            }
+        }
+    }
+
+    fun saveImagesToDeviceLegacy(document: Document, treeUri: Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val startTime = System.currentTimeMillis()
+            _isSaving.value = true
+            try {
+                val sourceFile = File(document.filePath)
+                if (!sourceFile.exists()) {
+                    _navigationEvent.send(FileNavigationEvent.ShowError("Source file not found."))
+                    return@launch
+                }
+
+                val jpegPages = JpegPdfWriter.extractEmbeddedJpegs(sourceFile)
+                if (jpegPages.isEmpty()) {
+                    _navigationEvent.send(FileNavigationEvent.ShowError("No pages found to save."))
+                    return@launch
+                }
+
+                val treeDoc = androidx.documentfile.provider.DocumentFile.fromTreeUri(appContext, treeUri)
+                    ?: throw IllegalStateException("Could not open selected folder.")
+
+                val cleanName = document.name.substringBeforeLast(".")
+                var savedCount = 0
+                jpegPages.forEachIndexed { index, jpegBytes ->
+                    val fileName = if (jpegPages.size == 1) "$cleanName.jpg" else "${cleanName}_page${index + 1}.jpg"
+                    val newFile = treeDoc.createFile("image/jpeg", fileName)
+                    if (newFile != null) {
+                        appContext.contentResolver.openOutputStream(newFile.uri)?.use { out -> out.write(jpegBytes) }
+                        savedCount++
+                    }
+                }
+
+                if (savedCount == jpegPages.size) {
+                    _navigationEvent.send(FileNavigationEvent.ShowMessage("Saved $savedCount image(s)."))
+                } else {
+                    _navigationEvent.send(FileNavigationEvent.ShowMessage("Saved $savedCount of ${jpegPages.size} image(s)."))
+                }
+            } catch (e: Exception) {
+                _navigationEvent.send(FileNavigationEvent.ShowError("Save failed: ${e.localizedMessage}"))
+            } finally {
+                enforceMinimumDelay(startTime)
+                _isSaving.value = false
+            }
+        }
+    }
+
+    fun handleScannedDocuments(imageUris: List<String>) {
+        if (imageUris.isEmpty()) return
         viewModelScope.launch(Dispatchers.IO) {
             val startTime = System.currentTimeMillis()
             _isImporting.value = true
 
             try {
-                if (imageUris.isNotEmpty()) {
-                    documentUseCases.importMultipleImages(imageUris)
-                        .onSuccess { generatedId ->
-                            _navigationEvent.send(FileNavigationEvent.NavigateToPreview(generatedId))
-                        }
-                        .onFailure { err ->
-                            _navigationEvent.send(
-                                FileNavigationEvent.ShowError(
-                                    err.localizedMessage ?: "Failed compiling scanned images."
-                                )
+                documentUseCases.importMultipleImages(imageUris)
+                    .onSuccess { generatedId ->
+                        _navigationEvent.send(FileNavigationEvent.NavigateToPreview(generatedId))
+                    }
+                    .onFailure { err ->
+                        _navigationEvent.send(
+                            FileNavigationEvent.ShowError(
+                                err.localizedMessage ?: "Failed compiling scanned images."
                             )
-                        }
-                } else if (pdfUri != null) {
-                    documentUseCases.importMultipleFiles(listOf(pdfUri))
-                        .onFailure { err ->
-                            _navigationEvent.send(
-                                FileNavigationEvent.ShowError(
-                                    err.localizedMessage ?: "Failed importing scanned PDF."
-                                )
-                            )
-                        }
-                }
+                        )
+                    }
             } catch (e: Exception) {
                 _navigationEvent.send(
                     FileNavigationEvent.ShowError(e.localizedMessage ?: "Unknown scan error")

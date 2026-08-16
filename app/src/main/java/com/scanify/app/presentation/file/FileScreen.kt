@@ -1,7 +1,6 @@
 package com.scanify.app.presentation.file
 
 import android.content.Intent
-import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -60,6 +59,7 @@ import com.scanify.app.presentation.components.moreoptioncomponents.MoreOptionsB
 import com.scanify.app.presentation.file.components.QuickImportActionCard
 import com.scanify.app.presentation.util.OfficeFileOpener
 import com.scanify.app.presentation.util.rememberDocumentScanner
+import com.scanify.app.presentation.util.rememberSaveDocumentHandler
 import com.scanify.app.presentation.viewmodels.FileNavigationEvent
 import com.scanify.app.presentation.viewmodels.FileUiState
 import com.scanify.app.presentation.viewmodels.FileViewModel
@@ -84,7 +84,6 @@ fun FileScreen(
     var selectedDocForOptions by remember { mutableStateOf<Document?>(null) }
     var docToRename by remember { mutableStateOf<Document?>(null) }
     var docToDelete by remember { mutableStateOf<Document?>(null) }
-    var docToExportLegacy by remember { mutableStateOf<Document?>(null) }
 
     val onCardClick = remember(viewModel) {
         { doc: Document -> viewModel.onDocumentClick(doc) }
@@ -107,16 +106,7 @@ fun FileScreen(
         filteredDocs.chunked(2)
     }
 
-    val exportDocumentLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("*/*")
-    ) { uri ->
-        uri?.let { safeUri ->
-            docToExportLegacy?.let { doc ->
-                viewModel.saveToSelectedUri(doc, safeUri)
-            }
-        }
-        docToExportLegacy = null
-    }
+    val saveDocument = rememberSaveDocumentHandler(viewModel)
 
     LaunchedEffect(Unit) {
         viewModel.navigationEvent.collect { event ->
@@ -194,8 +184,8 @@ fun FileScreen(
 
     val launchScanner = rememberDocumentScanner(
         onLoading = { loading -> isOptimizing = loading },
-        onSuccess = { imageUris, pdfUri ->
-            viewModel.handleScannedDocuments(imageUris, pdfUri)
+        onSuccess = { imageUris ->
+            viewModel.handleScannedDocuments(imageUris)
         }
     )
 
@@ -397,17 +387,8 @@ fun FileScreen(
                     selectedDocForOptions = null
                 },
                 onSaveClick = {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        viewModel.autoSaveToDocuments(document)
-                        selectedDocForOptions = null
-                    } else {
-                        docToExportLegacy = document
-                        val extension = document.fileType.lowercase()
-                        val fileNameWithExtension = "${document.name}.$extension"
-
-                        exportDocumentLauncher.launch(fileNameWithExtension)
-                        selectedDocForOptions = null
-                    }
+                    saveDocument(document)
+                    selectedDocForOptions = null
                 },
                 onDeleteClick = {
                     docToDelete = document

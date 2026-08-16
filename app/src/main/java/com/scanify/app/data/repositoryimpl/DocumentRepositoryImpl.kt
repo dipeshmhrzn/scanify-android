@@ -40,9 +40,23 @@ class DocumentRepositoryImpl @Inject constructor(
     override suspend fun renameDocument(document: Document, newName: String): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
-                dao.updateDocumentName(document.id, newName)
+                val trimmedName = newName.trim()
+                require(trimmedName.isNotEmpty()) { "Name cannot be empty." }
+                val uniqueName = resolveUniqueName(trimmedName, excludeId = document.id)
+                dao.updateDocumentName(document.id, uniqueName)
             }
         }
+
+    private suspend fun resolveUniqueName(desiredName: String, excludeId: Long): String {
+        if (dao.findByExactName(desiredName, excludeId) == null) return desiredName
+
+        var counter = 2
+        while (true) {
+            val candidate = "$desiredName ($counter)"
+            if (dao.findByExactName(candidate, excludeId) == null) return candidate
+            counter++
+        }
+    }
 
     override fun searchDocuments(query: String): Flow<List<Document>> {
         return dao.searchDocuments(query).map { entities ->

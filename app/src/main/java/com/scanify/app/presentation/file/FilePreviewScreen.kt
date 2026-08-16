@@ -3,10 +3,7 @@ package com.scanify.app.presentation.file
 import android.content.ClipData
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
@@ -67,6 +64,7 @@ import com.scanify.app.presentation.file.components.PreviewBottomBar
 import com.scanify.app.presentation.lens.LensInteractiveWorkspace
 import com.scanify.app.presentation.lens.LensUiState
 import com.scanify.app.presentation.util.rememberDocumentScanner
+import com.scanify.app.presentation.util.rememberSaveDocumentHandler
 import com.scanify.app.presentation.viewmodels.FileNavigationEvent
 import com.scanify.app.presentation.viewmodels.FileViewModel
 import com.scanify.app.presentation.viewmodels.LensViewModel
@@ -98,27 +96,16 @@ fun PreviewScreen(
 
     var docToRename by remember { mutableStateOf<Document?>(null) }
     var docToDelete by remember { mutableStateOf<Document?>(null) }
-    var docToExportLegacy by remember { mutableStateOf<Document?>(null) }
 
     var isLensActiveMode by remember { mutableStateOf(false) }
     val documentListState = rememberLazyListState()
     var capturedActivePageIndex by remember { mutableIntStateOf(0) }
 
-    val launchScanner = rememberDocumentScanner(onLoading = {}, onSuccess = { imageUris, pdfUri ->
+    val launchScanner = rememberDocumentScanner(onLoading = {}, onSuccess = { imageUris ->
         viewModel.appendScannedImages(imageUris)
     })
 
-    val exportDocumentLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("*/*")
-    ) { uri ->
-        uri?.let { safeUri ->
-            docToExportLegacy?.let { doc ->
-                fileViewModel.saveToSelectedUri(doc, safeUri)
-            }
-        }
-        docToExportLegacy = null
-    }
-
+    val saveDocument = rememberSaveDocumentHandler(fileViewModel)
     val currentDocument = (uiState as? PreviewUiState.Success)?.document
 
     LaunchedEffect(Unit) {
@@ -194,7 +181,8 @@ fun PreviewScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            text = if (isLensActiveMode) "Scanify Lens" else (currentDocument?.name ?: "Preview"),
+                            text = if (isLensActiveMode) "Scanify Lens" else (currentDocument?.name
+                                ?: "Preview"),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             style = MaterialTheme.typography.titleLarge
@@ -259,16 +247,7 @@ fun PreviewScreen(
                 if (!isLensActiveMode) {
                     PreviewBottomBar(
                         onSaveClick = {
-                            currentDocument?.let { document ->
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                    fileViewModel.autoSaveToDocuments(document)
-                                } else {
-                                    docToExportLegacy = document
-                                    val extension = document.fileType.lowercase()
-                                    val fileNameWithExtension = "${document.name}.$extension"
-                                    exportDocumentLauncher.launch(fileNameWithExtension)
-                                }
-                            }
+                            currentDocument?.let { document -> saveDocument(document) }
                         },
                         onRenameClick = {
                             currentDocument?.let { docToRename = it }
@@ -332,13 +311,14 @@ fun PreviewScreen(
                                 state = pagerState,
                                 modifier = Modifier.fillMaxSize()
                             ) { page ->
-                                val modelData: Any = if (state.document.fileType.uppercase() == "PDF") {
-                                    com.scanify.app.presentation.util.DocumentPageRequest(
-                                        state.document.filePath, page, state.lastModified
-                                    )
-                                } else {
-                                    java.io.File(state.document.filePath)
-                                }
+                                val modelData: Any =
+                                    if (state.document.fileType.uppercase() == "PDF") {
+                                        com.scanify.app.presentation.util.DocumentPageRequest(
+                                            state.document.filePath, page, state.lastModified
+                                        )
+                                    } else {
+                                        java.io.File(state.document.filePath)
+                                    }
 
                                 Box(modifier = Modifier.fillMaxSize()) {
                                     AsyncImage(
@@ -369,15 +349,27 @@ fun PreviewScreen(
                                                     onActionTriggered = { action, text ->
                                                         if (action == "COPY") {
                                                             scope.launch {
-                                                                val clipData = ClipData.newPlainText("Extracted Text", text)
+                                                                val clipData =
+                                                                    ClipData.newPlainText(
+                                                                        "Extracted Text",
+                                                                        text
+                                                                    )
                                                                 clipboard.setClipEntry(clipData.toClipEntry())
                                                             }
-                                                            Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
+                                                            Toast.makeText(
+                                                                context,
+                                                                "Copied",
+                                                                Toast.LENGTH_SHORT
+                                                            ).show()
                                                         } else {
                                                             context.startActivity(
                                                                 Intent(
                                                                     Intent.ACTION_VIEW,
-                                                                    "https://www.google.com/search?q=${Uri.encode(text)}".toUri()
+                                                                    "https://www.google.com/search?q=${
+                                                                        Uri.encode(
+                                                                            text
+                                                                        )
+                                                                    }".toUri()
                                                                 )
                                                             )
                                                         }
@@ -401,7 +393,8 @@ fun PreviewScreen(
                                                 }
                                             }
 
-                                            LensUiState.Idle -> { /* Safe resting state boundary */ }
+                                            LensUiState.Idle -> { /* Safe resting state boundary */
+                                            }
                                         }
                                     }
                                 }

@@ -103,21 +103,25 @@ fun MainScreen(
                 is FileNavigationEvent.NavigateToPreview -> {
                     navController.navigate(Routes.PreviewScreen(id = event.documentId))
                 }
+
                 is FileNavigationEvent.ShowError -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
                 }
+
                 is FileNavigationEvent.ShowMessage -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
                 }
-                else -> { /* MainScreen doesn't need to handle file sharing/opening */ }
+
+                else -> { /* MainScreen doesn't need to handle file sharing/opening */
+                }
             }
         }
     }
 
     val launchScanner = rememberDocumentScanner(
         onLoading = { loading -> isOptimizing = loading },
-        onSuccess = { imageUris, pdfUri ->
-            viewModel.handleScannedDocuments(imageUris, pdfUri)
+        onSuccess = { imageUris ->
+            viewModel.handleScannedDocuments(imageUris)
         }
     )
 
