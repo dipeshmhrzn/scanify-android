@@ -58,6 +58,7 @@ import com.scanify.app.presentation.components.filecomponents.cards.ListFileCard
 import com.scanify.app.presentation.components.moreoptioncomponents.MoreOptionsBottomSheet
 import com.scanify.app.presentation.file.components.QuickImportActionCard
 import com.scanify.app.presentation.util.OfficeFileOpener
+import com.scanify.app.presentation.util.rememberCappedLoadingState
 import com.scanify.app.presentation.util.rememberDocumentScanner
 import com.scanify.app.presentation.util.rememberSaveDocumentHandler
 import com.scanify.app.presentation.viewmodels.FileNavigationEvent
@@ -75,7 +76,6 @@ fun FileScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val isImporting by viewModel.isImporting.collectAsStateWithLifecycle()
-    val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
 
     var selectedCategory by remember { mutableStateOf("All") }
     var isGridView by remember { mutableStateOf(true) }
@@ -225,18 +225,21 @@ fun FileScreen(
                         icon = Icons.Default.UploadFile,
                         iconBgColor = Color(0xFF2196F3),
                         onClick = {
-                            documentPickerLauncher.launch(
-                                arrayOf(
-                                    "application/pdf",
-                                    "application/msword",
-                                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                                    "application/vnd.ms-excel",
-                                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                    "application/vnd.ms-powerpoint",
-                                    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-                                    "text/plain",
+
+                            if (!isImporting) {
+                                documentPickerLauncher.launch(
+                                    arrayOf(
+                                        "application/pdf",
+                                        "application/msword",
+                                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                                        "application/vnd.ms-excel",
+                                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                        "application/vnd.ms-powerpoint",
+                                        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                                        "text/plain",
+                                    )
                                 )
-                            )
+                            }
                         })
 
                     QuickImportActionCard(
@@ -245,9 +248,11 @@ fun FileScreen(
                         icon = Icons.Default.Image,
                         iconBgColor = Color(0xFF9C27B0),
                         onClick = {
-                            imagePickerLauncher.launch(
-                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                            )
+                            if (!isImporting) {
+                                imagePickerLauncher.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                )
+                            }
                         })
                 }
             }
@@ -270,7 +275,7 @@ fun FileScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .fillParentMaxHeight(0.7f)
+                                .fillParentMaxHeight(0.5f)
                                 .padding(16.dp),
                             contentAlignment = Alignment.Center
                         ) {
@@ -298,7 +303,8 @@ fun FileScreen(
                         item(contentType = "category_empty") {
                             Box(
                                 modifier = Modifier
-                                    .fillMaxSize()
+                                    .fillMaxWidth()
+                                    .fillParentMaxHeight(0.5f)
                                     .padding(16.dp),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -354,7 +360,13 @@ fun FileScreen(
                 }
             }
         }
-        if (isImporting || isOptimizing || isSaving) {
+        val showBlockingDialog = rememberCappedLoadingState(
+            isActive = isOptimizing,
+            onCapReached = {
+                Toast.makeText(context, "Continuing in background...", Toast.LENGTH_SHORT).show()
+            }
+        )
+        if (showBlockingDialog) {
             Dialog(
                 onDismissRequest = {},
                 properties = DialogProperties(

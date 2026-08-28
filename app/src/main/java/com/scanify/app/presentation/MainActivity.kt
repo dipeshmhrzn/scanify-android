@@ -1,5 +1,8 @@
 package com.scanify.app.presentation
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -7,6 +10,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.runtime.getValue
+import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scanify.app.navigation.Navigation
@@ -20,6 +24,7 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
+
     @Inject
     lateinit var updateManager: UpdateManager
 
@@ -30,6 +35,10 @@ class MainActivity : ComponentActivity() {
             // User rejected the update prompt dialog; safely handle or log
         }
     }
+
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { /* Granted or denied - either way, NotificationHelper checks before posting. */ }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
@@ -44,6 +53,7 @@ class MainActivity : ComponentActivity() {
 
         if (savedInstanceState == null) {
             updateManager.checkForUpdates(updateLauncher)
+            requestNotificationPermissionIfNeeded()
         }
 
         setContent {
@@ -59,6 +69,17 @@ class MainActivity : ComponentActivity() {
                         onOnboardingFinished = { viewModel.completeOnboarding() }
                     )
                 }
+            }
+        }
+    }
+
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val alreadyGranted = ContextCompat.checkSelfPermission(
+                this, Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!alreadyGranted) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
     }
