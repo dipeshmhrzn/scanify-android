@@ -275,7 +275,7 @@ fun FileScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .fillParentMaxHeight(0.7f)
+                                .fillParentMaxHeight(0.5f)
                                 .padding(16.dp),
                             contentAlignment = Alignment.Center
                         ) {
@@ -303,7 +303,8 @@ fun FileScreen(
                         item(contentType = "category_empty") {
                             Box(
                                 modifier = Modifier
-                                    .fillMaxSize()
+                                    .fillMaxWidth()
+                                    .fillParentMaxHeight(0.5f)
                                     .padding(16.dp),
                                 contentAlignment = Alignment.Center
                             ) {
