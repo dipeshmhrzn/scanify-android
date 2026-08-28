@@ -46,8 +46,6 @@ import androidx.compose.ui.platform.toClipEntry
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -92,7 +90,6 @@ fun PreviewScreen(
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val lensState by lensViewModel.lensState.collectAsStateWithLifecycle()
-    val isSaving by fileViewModel.isSaving.collectAsStateWithLifecycle()
 
     var docToRename by remember { mutableStateOf<Document?>(null) }
     var docToDelete by remember { mutableStateOf<Document?>(null) }
@@ -181,8 +178,7 @@ fun PreviewScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            text = if (isLensActiveMode) "Scanify Lens" else (currentDocument?.name
-                                ?: "Preview"),
+                            text = if (isLensActiveMode) "Scanify Lens" else (currentDocument?.name ?: "Preview"),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             style = MaterialTheme.typography.titleLarge
@@ -311,14 +307,13 @@ fun PreviewScreen(
                                 state = pagerState,
                                 modifier = Modifier.fillMaxSize()
                             ) { page ->
-                                val modelData: Any =
-                                    if (state.document.fileType.uppercase() == "PDF") {
-                                        com.scanify.app.presentation.util.DocumentPageRequest(
-                                            state.document.filePath, page, state.lastModified
-                                        )
-                                    } else {
-                                        java.io.File(state.document.filePath)
-                                    }
+                                val modelData: Any = if (state.document.fileType.uppercase() == "PDF") {
+                                    com.scanify.app.presentation.util.DocumentPageRequest(
+                                        state.document.filePath, page, state.lastModified
+                                    )
+                                } else {
+                                    java.io.File(state.document.filePath)
+                                }
 
                                 Box(modifier = Modifier.fillMaxSize()) {
                                     AsyncImage(
@@ -349,27 +344,15 @@ fun PreviewScreen(
                                                     onActionTriggered = { action, text ->
                                                         if (action == "COPY") {
                                                             scope.launch {
-                                                                val clipData =
-                                                                    ClipData.newPlainText(
-                                                                        "Extracted Text",
-                                                                        text
-                                                                    )
+                                                                val clipData = ClipData.newPlainText("Extracted Text", text)
                                                                 clipboard.setClipEntry(clipData.toClipEntry())
                                                             }
-                                                            Toast.makeText(
-                                                                context,
-                                                                "Copied",
-                                                                Toast.LENGTH_SHORT
-                                                            ).show()
+                                                            Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
                                                         } else {
                                                             context.startActivity(
                                                                 Intent(
                                                                     Intent.ACTION_VIEW,
-                                                                    "https://www.google.com/search?q=${
-                                                                        Uri.encode(
-                                                                            text
-                                                                        )
-                                                                    }".toUri()
+                                                                    "https://www.google.com/search?q=${Uri.encode(text)}".toUri()
                                                                 )
                                                             )
                                                         }
@@ -393,8 +376,7 @@ fun PreviewScreen(
                                                 }
                                             }
 
-                                            LensUiState.Idle -> { /* Safe resting state boundary */
-                                            }
+                                            LensUiState.Idle -> { /* Safe resting state boundary */ }
                                         }
                                     }
                                 }
@@ -417,25 +399,6 @@ fun PreviewScreen(
                             )
                         }
                     }
-                }
-            }
-        }
-        if (isSaving) {
-            Dialog(
-                onDismissRequest = {},
-                properties = DialogProperties(
-                    dismissOnBackPress = false,
-                    dismissOnClickOutside = false,
-                    usePlatformDefaultWidth = false
-                )
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color(0xFF131324).copy(alpha = 0.85f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    LoadingIndicator()
                 }
             }
         }

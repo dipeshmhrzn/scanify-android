@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,6 +38,7 @@ import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.scanify.app.R
 import com.scanify.app.domain.model.Document
 import com.scanify.app.navigation.Routes
 import com.scanify.app.presentation.DeleteDocumentDialog
@@ -45,7 +47,10 @@ import com.scanify.app.presentation.components.NoFilesScreen
 import com.scanify.app.presentation.components.RenameDocumentDialog
 import com.scanify.app.presentation.components.filecomponents.cards.ListFileCard
 import com.scanify.app.presentation.components.moreoptioncomponents.MoreOptionsBottomSheet
+import com.scanify.app.presentation.home.components.PdfTool
+import com.scanify.app.presentation.home.components.PdfToolCard
 import com.scanify.app.presentation.util.OfficeFileOpener
+import com.scanify.app.presentation.util.rememberCappedLoadingState
 import com.scanify.app.presentation.util.rememberDocumentScanner
 import com.scanify.app.presentation.util.rememberSaveDocumentHandler
 import com.scanify.app.presentation.viewmodels.FileNavigationEvent
@@ -54,15 +59,18 @@ import com.scanify.app.presentation.viewmodels.FileViewModel
 import kotlinx.coroutines.withContext
 import java.io.File
 
+
+private val StaticPdfTools = listOf(
+    PdfTool("ID Cards", R.drawable.ic_id_card, Color(0xFF2196F3))
+)
+
 @Composable
 fun HomeScreen(
-    navController: NavHostController,
-    viewModel: FileViewModel = hiltViewModel()
+    navController: NavHostController, viewModel: FileViewModel = hiltViewModel()
 ) {
 
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
 
     var selectedDocForOptions by remember { mutableStateOf<Document?>(null) }
     var docToRename by remember { mutableStateOf<Document?>(null) }
@@ -91,8 +99,7 @@ fun HomeScreen(
         onLoading = { loading -> isOptimizing = loading },
         onSuccess = { imageUris ->
             viewModel.handleScannedDocuments(imageUris)
-        }
-    )
+        })
 
     val saveDocument = rememberSaveDocumentHandler(viewModel)
 
@@ -134,9 +141,7 @@ fun HomeScreen(
                             }
 
                             val fileUri = FileProvider.getUriForFile(
-                                context,
-                                "${context.packageName}.fileprovider",
-                                cacheFile
+                                context, "${context.packageName}.fileprovider", cacheFile
                             )
 
                             val shareIntent = Intent(Intent.ACTION_SEND).apply {
@@ -148,15 +153,12 @@ fun HomeScreen(
                             }
                             context.startActivity(
                                 Intent.createChooser(
-                                    shareIntent,
-                                    "Share Document"
+                                    shareIntent, "Share Document"
                                 )
                             )
                         } else {
                             Toast.makeText(
-                                context,
-                                "Error: Physical file not found.",
-                                Toast.LENGTH_SHORT
+                                context, "Error: Physical file not found.", Toast.LENGTH_SHORT
                             ).show()
                         }
                     } catch (e: Exception) {
@@ -168,38 +170,76 @@ fun HomeScreen(
         }
     }
     Box(modifier = Modifier.fillMaxSize()) {
-        when (val state = uiState) {
-            is FileUiState.Loading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) { LoadingIndicator() }
-            }
-
-            is FileUiState.Empty -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    NoFilesScreen(
-                        "No recent files found.",
-                        onScanNowClick = launchScanner
+                    Text(
+                        text = "Tools",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    StaticPdfTools.forEach { tool ->
+                        PdfToolCard(tool)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                HorizontalDivider(
+                    modifier = Modifier.fillMaxWidth(),
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+                )
             }
 
+            when (val state = uiState) {
+                is FileUiState.Loading -> {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillParentMaxHeight(0.8f)
+                                .padding(horizontal = 16.dp),
+                            contentAlignment = Alignment.Center
+                        ) { LoadingIndicator() }
+                    }
+                }
 
-            is FileUiState.Success -> {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.background),
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
+                is FileUiState.Empty -> {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillParentMaxHeight(0.7f)
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            NoFilesScreen(
+                                "No recent files found.", onScanNowClick = launchScanner
+                            )
+                        }
+                    }
+                }
+
+
+                is FileUiState.Success -> {
                     item {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -226,8 +266,7 @@ fun HomeScreen(
                                             restoreState = true
                                         }
                                     }
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                            )
+                                    .padding(horizontal = 8.dp, vertical = 4.dp))
                         }
                     }
 
@@ -263,14 +302,17 @@ fun HomeScreen(
                 onDeleteClick = {
                     docToDelete = document
                     selectedDocForOptions = null
-                }
-            )
+                })
         }
 
-        if (isOptimizing || isSaving) {
+        val showBlockingDialog = rememberCappedLoadingState(
+            isActive = isOptimizing, onCapReached = {
+                Toast.makeText(context, "Continuing in background...", Toast.LENGTH_SHORT).show()
+            })
+
+        if (showBlockingDialog) {
             Dialog(
-                onDismissRequest = {},
-                properties = DialogProperties(
+                onDismissRequest = {}, properties = DialogProperties(
                     dismissOnBackPress = false,
                     dismissOnClickOutside = false,
                     usePlatformDefaultWidth = false
@@ -294,18 +336,14 @@ fun HomeScreen(
                 onConfirm = { newName ->
                     viewModel.renameDocument(document, newName)
                     docToRename = null
-                }
-            )
+                })
         }
 
         docToDelete?.let { document ->
-            DeleteDocumentDialog(
-                onDismiss = { docToDelete = null },
-                onConfirm = {
-                    viewModel.deleteDocument(document)
-                    docToDelete = null
-                }
-            )
+            DeleteDocumentDialog(onDismiss = { docToDelete = null }, onConfirm = {
+                viewModel.deleteDocument(document)
+                docToDelete = null
+            })
         }
     }
 }

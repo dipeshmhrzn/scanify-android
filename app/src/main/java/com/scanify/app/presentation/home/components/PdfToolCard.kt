@@ -19,7 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
@@ -31,10 +31,9 @@ fun PdfToolCard(
 
     Box(
         modifier = modifier
-            .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = {})
-            .padding(vertical = 6.dp),
+            .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -48,7 +47,7 @@ fun PdfToolCard(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = pdfTool.icon,
+                    painter = painterResource(pdfTool.icon),
                     contentDescription = null,
                     modifier = Modifier.size(30.dp),
                     tint = Color.White
@@ -69,6 +68,6 @@ fun PdfToolCard(
 
 data class PdfTool(
     val label: String,
-    val icon: ImageVector,
+    val icon: Int,
     val bgColor: Color
 )

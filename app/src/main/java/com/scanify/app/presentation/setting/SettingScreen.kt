@@ -6,15 +6,12 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,8 +21,7 @@ import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Downloading
 import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material3.Card
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,8 +36,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -109,51 +103,6 @@ fun SettingScreen(
         }
     }
 
-    if (isProcessing) {
-        val processingState = exportState as? ExportState.Processing
-        val currentProgress = processingState?.progress ?: 0f
-        val currentFile = processingState?.currentFileName ?: ""
-        val percentage = (currentProgress * 100).toInt()
-
-        Dialog(
-            onDismissRequest = { },
-            properties = DialogProperties(
-                dismissOnBackPress = false,
-                dismissOnClickOutside = false,
-                usePlatformDefaultWidth = false
-            )
-        ) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Text(
-                        text = "Exporting Backup",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
-                    LinearProgressIndicator(
-                        progress = { currentProgress },
-                        modifier = Modifier.fillMaxWidth(),
-                        color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.outlineVariant
-                    )
-
-                    Text(
-                        text = "Packaging: $currentFile ($percentage%)",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-    }
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -201,14 +150,25 @@ fun SettingScreen(
             Spacer(modifier = Modifier.height(24.dp))
             SectionTitle("Backup")
             SettingsCard {
+                val processingState = exportState as? ExportState.Processing
+                val progressPercent = ((processingState?.progress ?: 0f) * 100).toInt()
+
                 SettingsRow(
                     icon = Icons.Rounded.Downloading,
                     iconBgColor = if (hasFiles) Color(0xFF2196F3) else Color.Gray,
                     title = "Backup all files",
-                    subtitle = if (hasFiles) "Bundle DB and document assets to Documents/Scanify" else "No files available to backup",
+                    subtitle = when {
+                        isProcessing -> "Backing up... $progressPercent%"
+                        hasFiles -> "Bundle DB and document assets to Documents/Scanify"
+                        else -> "No files available to backup"
+                    },
                     showDivider = false,
                     onClick = {
+
+                        if (isProcessing) return@SettingsRow
+
                         if (hasFiles) {
+                            Toast.makeText(context, "Backup started.", Toast.LENGTH_SHORT).show()
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                                 viewModel.triggerFullBackupExport()
                             } else {
@@ -221,7 +181,16 @@ fun SettingScreen(
                         }
                     },
                     trailingContent = {
-                        if (hasFiles) ChevronIcon()
+                        if (isProcessing) {
+                            CircularProgressIndicator(
+                                progress = { processingState?.progress ?: 0f },
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        } else if (hasFiles) {
+                            ChevronIcon()
+                        }
                     }
                 )
             }
