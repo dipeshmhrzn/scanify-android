@@ -16,6 +16,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
@@ -25,14 +27,20 @@ class DocumentRepositoryImpl @Inject constructor(
     private val dao: DocumentDao
 ) : DocumentRepository {
 
+    private val nameMutex = Mutex()
+
     override fun getAllDocuments(): Flow<List<Document>> = dao.getAllDocuments().map { list ->
         list.map { it.toDomain() }
     }
 
     override suspend fun getDocumentById(id: Long): Document? = dao.getDocumentById(id)?.toDomain()
 
-    override suspend fun importDocument(document: Document): Long =
-        dao.insertDocuments(document.toEntity())
+    override suspend fun importDocument(document: Document): Long = withContext(Dispatchers.IO) {
+        nameMutex.withLock {
+            val uniqueName = resolveUniqueName(document.name, excludeId = -1L)
+            dao.insertDocuments(document.copy(name = uniqueName).toEntity())
+        }
+    }
 
     override suspend fun deleteDocument(document: Document) =
         dao.deleteDocuments(document.toEntity())
@@ -42,8 +50,10 @@ class DocumentRepositoryImpl @Inject constructor(
             runCatching {
                 val trimmedName = newName.trim()
                 require(trimmedName.isNotEmpty()) { "Name cannot be empty." }
-                val uniqueName = resolveUniqueName(trimmedName, excludeId = document.id)
-                dao.updateDocumentName(document.id, uniqueName)
+                nameMutex.withLock {
+                    val uniqueName = resolveUniqueName(trimmedName, excludeId = document.id)
+                    dao.updateDocumentName(document.id, uniqueName)
+                }
             }
         }
 

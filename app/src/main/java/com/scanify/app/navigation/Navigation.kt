@@ -18,6 +18,7 @@ import com.scanify.app.presentation.components.MainScreen
 import com.scanify.app.presentation.file.FileScreen
 import com.scanify.app.presentation.file.PreviewScreen
 import com.scanify.app.presentation.home.HomeScreen
+import com.scanify.app.presentation.idcard.IdCardPreviewScreen
 import com.scanify.app.presentation.onboarding.OnboardingScreen
 import com.scanify.app.presentation.search.SearchScreen
 import com.scanify.app.presentation.setting.SettingScreen
@@ -122,6 +123,15 @@ fun Navigation(
                 OnboardingScreen(
                     navController = navController,
                     onOnboardingFinished = onOnboardingFinished
+                )
+            }
+
+            composable<Routes.IdCardPreviewScreen> { backStackEntry ->
+                val route: Routes.IdCardPreviewScreen = backStackEntry.toRoute()
+                IdCardPreviewScreen(
+                    frontUri = route.frontUri,
+                    backUri = route.backUri,
+                    navController = navController
                 )
             }
         }
