@@ -11,6 +11,7 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.scanify.app.data.repositoryimpl.DocumentSaveManager
 import com.scanify.app.domain.usecases.DocumentUseCases
+import com.scanify.app.domain.usecases.idcardusecase.SaveIdCardDocumentUseCase
 import com.scanify.app.presentation.notification.NotificationHelper
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -21,6 +22,7 @@ class FileTaskWorker @AssistedInject constructor(
     @Assisted params: WorkerParameters,
     private val documentUseCases: DocumentUseCases,
     private val saveManager: DocumentSaveManager,
+    private val saveIdCardDocument: SaveIdCardDocumentUseCase,
     private val dataStore: DataStore<Preferences>
 ) : CoroutineWorker(context, params) {
 
@@ -31,6 +33,8 @@ class FileTaskWorker @AssistedInject constructor(
         const val KEY_TARGET_URI = "target_uri"
         const val KEY_RESULT_MESSAGE = "result_message"
         const val KEY_NAVIGATE_DOCUMENT_ID = "navigate_document_id"
+        const val KEY_ID_CARD_FRONT_URI = "id_card_front_uri"
+        const val KEY_ID_CARD_BACK_URI = "id_card_back_uri"
 
         const val TASK_IMPORT_FILES = "import_files"
         const val TASK_IMPORT_IMAGES = "import_images"
@@ -38,6 +42,7 @@ class FileTaskWorker @AssistedInject constructor(
         const val TASK_SAVE_TO_URI = "save_to_uri"
         const val TASK_SAVE_IMAGES = "save_images"
         const val TASK_SAVE_IMAGES_LEGACY = "save_images_legacy"
+        const val TASK_GENERATE_ID_CARD = "generate_id_card"
     }
 
     override suspend fun doWork(): Result {
@@ -52,6 +57,7 @@ class FileTaskWorker @AssistedInject constructor(
                 TASK_SAVE_TO_URI -> runSaveToUri()
                 TASK_SAVE_IMAGES -> runSaveImages()
                 TASK_SAVE_IMAGES_LEGACY -> runSaveImagesLegacy()
+                TASK_GENERATE_ID_CARD -> runGenerateIdCard()
                 else -> Result.failure()
             }
         } catch (e: Exception) {
@@ -167,10 +173,34 @@ class FileTaskWorker @AssistedInject constructor(
         }
     }
 
+    private suspend fun runGenerateIdCard(): Result {
+        val frontUri = inputData.getString(KEY_ID_CARD_FRONT_URI) ?: return Result.failure()
+        val backUri = inputData.getString(KEY_ID_CARD_BACK_URI) // optional - not every ID has a back side
+        val outcome = saveIdCardDocument(frontUri, backUri)
+        return outcome.fold(
+            onSuccess = { documentId ->
+                LastActivityTracker.markActiveToday(dataStore)
+                notifySuccess("ID card ready", "Print-ready PDF saved.")
+                Result.success(
+                    workDataOf(
+                        KEY_RESULT_MESSAGE to "Print-ready PDF saved.",
+                        KEY_NAVIGATE_DOCUMENT_ID to documentId
+                    )
+                )
+            },
+            onFailure = { err ->
+                val message = err.localizedMessage ?: "Failed to generate the ID card PDF."
+                notifyFailure("ID card failed", message)
+                Result.failure(workDataOf(KEY_RESULT_MESSAGE to message))
+            }
+        )
+    }
+
     private fun taskLabel(taskType: String): String = when (taskType) {
         TASK_IMPORT_FILES, TASK_IMPORT_IMAGES -> "Importing..."
         TASK_SAVE_TO_DEVICE, TASK_SAVE_TO_URI -> "Saving document..."
         TASK_SAVE_IMAGES, TASK_SAVE_IMAGES_LEGACY -> "Saving images..."
+        TASK_GENERATE_ID_CARD -> "Generating ID card PDF..."
         else -> "Working..."
     }
 

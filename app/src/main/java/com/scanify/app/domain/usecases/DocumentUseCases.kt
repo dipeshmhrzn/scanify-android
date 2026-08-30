@@ -3,6 +3,7 @@ package com.scanify.app.domain.usecases
 import com.scanify.app.domain.usecases.deletedocumentusecases.DeleteDocumentUseCase
 import com.scanify.app.domain.usecases.getdocumentusecases.GetDocumentByIdUseCase
 import com.scanify.app.domain.usecases.getdocumentusecases.GetDocumentsUseCase
+import com.scanify.app.domain.usecases.idcardusecase.SaveIdCardDocumentUseCase
 import com.scanify.app.domain.usecases.importdocumentusecase.AppendImagesToDocumentUseCase
 import com.scanify.app.domain.usecases.importdocumentusecase.ImportDocumentUseCase
 import com.scanify.app.domain.usecases.importdocumentusecase.ImportMultipleFilesUseCase
@@ -22,5 +23,6 @@ data class DocumentUseCases @Inject constructor(
     val appendImagesToDocument: AppendImagesToDocumentUseCase,
     val renameDocumentUseCase: RenameDocumentUseCase,
     val searchDocumentsUseCase: SearchDocumentsUseCase,
-    val saveDocumentToDeviceUseCase: SaveDocumentToDeviceUseCase
+    val saveDocumentToDeviceUseCase: SaveDocumentToDeviceUseCase,
+    val saveIdCardDocument: SaveIdCardDocumentUseCase
 )

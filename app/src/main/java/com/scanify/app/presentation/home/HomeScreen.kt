@@ -101,6 +101,24 @@ fun HomeScreen(
             viewModel.handleScannedDocuments(imageUris)
         })
 
+    var isOptimizingIdCard by remember { mutableStateOf(false) }
+
+    val launchIdCardScanner = rememberDocumentScanner(
+        onLoading = { loading -> isOptimizingIdCard = loading },
+        pageLimit = 2,
+        onSuccess = { imageUris ->
+            if (imageUris.isNotEmpty()) {
+                navController.navigate(
+                    Routes.IdCardPreviewScreen(
+                        frontUri = imageUris[0],
+                        backUri = imageUris.getOrNull(1)
+                    )
+                )
+            } else {
+                Toast.makeText(context, "No page was captured.", Toast.LENGTH_LONG).show()
+            }
+        })
+
     val saveDocument = rememberSaveDocumentHandler(viewModel)
 
     LaunchedEffect(Unit) {
@@ -196,7 +214,14 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     StaticPdfTools.forEach { tool ->
-                        PdfToolCard(tool)
+                        PdfToolCard(
+                            tool,
+                            onClick = {
+                                when (tool.label) {
+                                    "ID Cards" -> launchIdCardScanner()
+                                }
+                            }
+                        )
                     }
                 }
 
@@ -306,7 +331,7 @@ fun HomeScreen(
         }
 
         val showBlockingDialog = rememberCappedLoadingState(
-            isActive = isOptimizing, onCapReached = {
+            isActive = isOptimizing || isOptimizingIdCard, onCapReached = {
                 Toast.makeText(context, "Continuing in background...", Toast.LENGTH_SHORT).show()
             })
 

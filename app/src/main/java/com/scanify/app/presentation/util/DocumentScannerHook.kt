@@ -26,20 +26,22 @@ import kotlinx.coroutines.sync.withPermit
 @Composable
 fun rememberDocumentScanner(
     onLoading: (Boolean) -> Unit,
+    pageLimit: Int? = null,
     onSuccess: (imageUris: List<String>) -> Unit
 ): () -> Unit {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val scannerOptions = remember {
+    val scannerOptions = remember(pageLimit) {
         GmsDocumentScannerOptions.Builder()
             .setGalleryImportAllowed(true)
             .setResultFormats(GmsDocumentScannerOptions.RESULT_FORMAT_JPEG)
             .setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_FULL)
+            .apply { pageLimit?.let { setPageLimit(it) } }
             .build()
     }
 
-    val scannerClient = remember { GmsDocumentScanning.getClient(scannerOptions) }
+    val scannerClient = remember(scannerOptions) { GmsDocumentScanning.getClient(scannerOptions) }
 
     val optimizeSemaphore = remember { Semaphore(3) }
 

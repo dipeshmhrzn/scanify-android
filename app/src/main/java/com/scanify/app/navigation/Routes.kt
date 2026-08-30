@@ -24,6 +24,7 @@ sealed class Routes {
 
     @Serializable
     data object OnBoardingScreen: Routes()
-
+    @Serializable
+    data class IdCardPreviewScreen(val frontUri: String, val backUri: String? = null) : Routes()
 
 }

@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -26,13 +25,14 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun PdfToolCard(
     pdfTool: PdfTool,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
 ) {
 
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = {})
+            .clickable(onClick = onClick)
             .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
